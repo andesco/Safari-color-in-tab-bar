@@ -1,0 +1,16 @@
+{
+  "name": "safari-color-in-tab-bar",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "wrangler pages dev . --config wrangler.local.toml",
+    "deploy": "wrangler pages deploy . --config wrangler.local.toml --commit-hash $(git rev-parse HEAD) --production"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "serve": "^14.2.5"
+  }
+}

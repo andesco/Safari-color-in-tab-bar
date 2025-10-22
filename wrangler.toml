@@ -1,0 +1,8 @@
+# `wrangler deploy` & `wrangler dev` use wrangler.toml
+name = "safari-color-in-tab-bar"
+main = "index.html"
+compatibility_date = "2023-10-26"
+account_id = ""
+
+[site]
+bucket = "./" # deploy the contents of the current directory
