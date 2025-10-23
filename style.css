@@ -190,8 +190,8 @@ h3 {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 0.625rem; /* 10px / 16px */
-    margin: 1.25rem auto; /* 20px / 16px */
+    gap: 1.25rem;
+    margin: 1.25rem auto;
 }
 
 footer {

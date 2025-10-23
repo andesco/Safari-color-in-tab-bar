@@ -29,6 +29,98 @@ function rgbToHex(r, g, b) {
     return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
 }
 
+// Helper function to convert HEX to HSL
+function hexToHsl(hex) {
+    const rgb = hexToRgb(hex);
+    if (!rgb) return null;
+
+    let r = rgb.r / 255;
+    let g = rgb.g / 255;
+    let b = rgb.b / 255;
+
+    let max = Math.max(r, g, b);
+    let min = Math.min(r, g, b);
+    let h, s, l = (max + min) / 2;
+
+    if (max === min) {
+        h = s = 0; // achromatic
+    } else {
+        let d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch (max) {
+            case r:
+                h = (g - b) / d + (g < b ? 6 : 0);
+                break;
+            case g:
+                h = (b - r) / d + 2;
+                break;
+            case b:
+                h = (r - g) / d + 4;
+                break;
+        }
+        h /= 6;
+    }
+
+    return {
+        h: h * 360,
+        s: s * 100,
+        l: l * 100
+    };
+}
+
+// Helper function to convert HSL to HEX
+function hslToHex(h, s, l) {
+    h /= 360;
+    s /= 100;
+    l /= 100;
+    let c = (1 - Math.abs(2 * l - 1)) * s;
+    let x = c * (1 - Math.abs((h * 6) % 2 - 1));
+    let m = l - c / 2;
+    let r = 0,
+        g = 0,
+        b = 0;
+
+    if (0 <= h && h < 1 / 6) {
+        r = c;
+        g = x;
+        b = 0;
+    } else if (1 / 6 <= h && h < 2 / 6) {
+        r = x;
+        g = c;
+        b = 0;
+    } else if (2 / 6 <= h && h < 3 / 6) {
+        r = 0;
+        g = c;
+        b = x;
+    } else if (3 / 6 <= h && h < 4 / 6) {
+        r = 0;
+        g = x;
+        b = c;
+    } else if (4 / 6 <= h && h < 5 / 6) {
+        r = x;
+        g = 0;
+        b = c;
+    } else if (5 / 6 <= h && h < 1) {
+        r = c;
+        g = 0;
+        b = x;
+    }
+    r = Math.round((r + m) * 255);
+    g = Math.round((g + m) * 255);
+    b = Math.round((b + m) * 255);
+
+    return rgbToHex(r, g, b);
+}
+
+// Function to get complementary color
+function getComplementaryColor(hex) {
+    const hsl = hexToHsl(hex);
+    if (!hsl) return null;
+
+    let complementaryHue = (hsl.h + 180) % 360;
+    return hslToHex(complementaryHue, hsl.s, hsl.l);
+}
+
 
 
 
@@ -292,6 +384,13 @@ document.addEventListener('DOMContentLoaded', function() {
         let initialBodyColor = formatColor(bodyColorParam);
         let initialMetaColor = formatColor(metaColorParam);
 
+        // Complementary color logic
+        if (initialBodyColor && !initialMetaColor) {
+            initialMetaColor = getComplementaryColor(initialBodyColor);
+        } else if (initialMetaColor && !initialBodyColor) {
+            initialBodyColor = getComplementaryColor(initialMetaColor);
+        }
+
         if (initialBodyColor) {
             try {
                 bodyColorPicker.color.set(initialBodyColor);
@@ -326,46 +425,50 @@ document.addEventListener('DOMContentLoaded', function() {
     // Share Button Logic
     const shareButton = document.getElementById("shareButton");
     if (shareButton) {
-        shareButton.addEventListener("click", async () => {
-            const bodyColorHex = (bodyColorPicker && bodyColorPicker.color) ? bodyColorPicker.color.hex.substring(1).toUpperCase() : '';
-            const metaColorHex = (metaColorPicker && metaColorPicker.color) ? metaColorPicker.color.hex.substring(1).toUpperCase() : '';
-            console.log('Share Button Clicked:');
-            console.log('bodyColorHex:', bodyColorHex);
-            console.log('metaColorHex:', metaColorHex);
+        shareButton.addEventListener("click", () => {
+            // Get hex values safely
+            let bodyColorHex = '';
+            let metaColorHex = '';
+
+            if (bodyColorPicker && bodyColorPicker.color && bodyColorPicker.color.hexString) {
+                bodyColorHex = bodyColorPicker.color.hexString.substring(1).toUpperCase();
+            }
+
+            if (metaColorPicker && metaColorPicker.color && metaColorPicker.color.hexString) {
+                metaColorHex = metaColorPicker.color.hexString.substring(1).toUpperCase();
+            }
 
             const shareUrl = new URL(window.location.origin + window.location.pathname);
-            shareUrl.searchParams.set('body', bodyColorHex);
-            shareUrl.searchParams.set('meta', metaColorHex);
+            if (bodyColorHex) {
+                shareUrl.searchParams.set('body', bodyColorHex);
+            }
+            if (metaColorHex) {
+                shareUrl.searchParams.set('meta', metaColorHex);
+            }
+
+            console.log('Share button clicked');
+            console.log('navigator.share available:', !!navigator.share);
             console.log('Share URL:', shareUrl.toString());
 
+            // Check if Web Share API is available
             if (navigator.share) {
-                try {
-                    await navigator.share({
-                        title: document.title,
-                        url: shareUrl.toString(),
+                const shareData = { url: shareUrl.toString() };
+
+                navigator.share(shareData)
+                    .then(() => {
+                        console.log('Share successful');
+                    })
+                    .catch((error) => {
+                        console.log('Share error:', error.name, error.message);
+                        // If share fails and it's not because user cancelled, redirect
+                        if (error.name !== 'AbortError') {
+                            window.location.href = shareUrl.toString();
+                        }
                     });
-                    console.log('URL shared successfully!');
-                } catch (error) {
-                    console.error('Error sharing URL:', error);
-                }
             } else {
-                // Fallback for browsers that do not support the Web Share API
-                // This could be copying to clipboard or showing a custom share dialog
-                // For now, we'll just log a message.
-                console.log('Web Share API not supported. Fallback needed.');
-                // Optionally, copy to clipboard as a fallback
-                try {
-                    await navigator.clipboard.writeText(shareUrl.toString());
-                    // Provide visual feedback that the URL has been copied
-                    const originalText = shareButton.textContent;
-                    shareButton.textContent = 'Copied!';
-                    setTimeout(() => {
-                        shareButton.textContent = originalText;
-                    }, 2000);
-                    console.log('URL copied to clipboard as fallback:', shareUrl.toString());
-                } catch (error) {
-                    console.error('Error copying URL to clipboard as fallback:', error);
-                }
+                // No Web Share API, redirect to URL
+                console.log('Web Share API not available, redirecting');
+                window.location.href = shareUrl.toString();
             }
         });
     }
