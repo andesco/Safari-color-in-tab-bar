@@ -8,6 +8,7 @@ yarn-debug.log*
 yarn-error.log*
 package-lock.json
 yarn.lock
+package.json
 
 # Editor directories and files
 .vscode/
@@ -20,7 +21,6 @@ build/
 
 # Cloudflare Pages
 .github/
-wrangler.local.toml
 
 # Project Specific
 .env

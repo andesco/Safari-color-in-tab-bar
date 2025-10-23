@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "wrangler pages dev . --config wrangler.local.toml",
-    "deploy": "wrangler pages deploy . --config wrangler.local.toml --commit-hash $(git rev-parse HEAD) --production"
+    "deploy": "wrangler pages deploy . --commit-hash $(git rev-parse HEAD)"
   },
   "keywords": [],
   "author": "",
