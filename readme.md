@@ -1,6 +1,6 @@
-#  Safari: Show Color in <nobr>Tab Bar</nobr>
+#  Safari Demo: Color in Tab Bar
 
-Apple has quietly abandoned support for using `<meta name="theme-color">` to theme or color Safari's browser UI, in favor of using the standard `body` element.
+Apple has quietly abandoned support for using `<meta name="theme-color">` to theme or color Safari’s browser UI, in favor of using the standard `body` element.
 
 View how your web browser supports color in its UI:
 
