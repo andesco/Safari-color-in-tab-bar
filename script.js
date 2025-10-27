@@ -1,17 +1,18 @@
-function colorIsDarkAdvanced(bgColor) {
-  let color = (bgColor.charAt(0) === '#') ? bgColor.substring(1, 7) : bgColor;
-  let r = parseInt(color.substring(0, 2), 16); // hexToR
-  let g = parseInt(color.substring(2, 4), 16); // hexToG
-  let b = parseInt(color.substring(4, 6), 16); // hexToB;
-  let uicolors = [r / 255, g / 255, b / 255];
-  let c = uicolors.map((col) => {
-    if (col <= 0.03928) {
-      return col / 12.92;
-    }
-    return Math.pow((col + 0.055) / 1.055, 2.4);
-  });
-  let L = (0.2126 * c[0]) + (0.7152 * c[1]) + (0.0722 * c[2]);
-  return L <= 0.179;
+function selectThemeWithLuma(bgColor) {
+  // Remove leading #
+  let hex = bgColor.replace(/^#/, '');
+
+  // Parse RGB
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+
+  // Apple-like "perceptual" brightness (no gamma correction)
+  // Uses Rec.709 luma coefficients
+  const Y = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+
+  // Threshold: roughly midpoint (127.5)
+  return Y <= 127.5;
 }
 
 function hexToRgb(hex) {
@@ -252,15 +253,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     hljs.highlightElement(codeGenBody);
                 }
         
-                const isDark = colorIsDarkAdvanced(hex);
-        
+                const useDarkThemeWithLightText = selectThemeWithLuma(hex);
+
             // Apply theme classes to body
-            document.body.classList.toggle('dark-theme', isDark);
-            document.body.classList.toggle('light-theme', !isDark);
-        
+            document.body.classList.toggle('dark-theme', useDarkThemeWithLightText);
+            document.body.classList.toggle('light-theme', !useDarkThemeWithLightText);
+
             // Re-invert Highlight.js theme logic
             if (highlightJsLightTheme && highlightJsDarkTheme) {
-                if (isDark) {
+                if (useDarkThemeWithLightText) {
                     highlightJsLightTheme.disabled = true; // Dark body background -> dark code theme
                     highlightJsDarkTheme.disabled = false;
                 } else {
@@ -308,11 +309,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
                                         
 
-                                                                const isDark = colorIsDarkAdvanced(hex);
+                                                                const useDarkThemeWithLightText = selectThemeWithLuma(hex);
 
-                                        
 
-                                                                const textColor = isDark ? '#FFFFFF' : '#000000';
+
+                                                                const textColor = useDarkThemeWithLightText ? '#FFFFFF' : '#000000';
 
                                         
 

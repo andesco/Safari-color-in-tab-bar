@@ -151,10 +151,8 @@ h3 {
 }
 
 .action-button {
-    background-color: #007AFF;
-    color: white;
     border: none;
-    padding: 0.625em 1.25em;
+    padding: 0.5em 1.00em;
     border-radius: 8px;
     font-size: 1em;
     cursor: pointer;
@@ -165,25 +163,25 @@ h3 {
     position: relative; /* Needed for absolute positioning of ::after */
 }
 
+.light-theme .action-button {
+    background-color: #222;
+    color: #eee;
+}
+
+.dark-theme .action-button {
+    background-color: #eee;
+    color: #222;
+}
+
 .action-button::after {
     content: '';
     display: inline-block;
     width: 1em;
     height: 1em;
-    background-color: currentColor; /* Colors the mask */
+    background-color: currentColor; /* sets color the mask */
     mask-size: contain;
     mask-repeat: no-repeat;
     mask-position: center;
-    margin-left: 0.5em; /* Space between text and icon */
-}
-
-#shareButton::after {
-    mask-image: url('./images/share.svg');
-    transform: scale(1.25);
-}
-
-#copyButton::after {
-    mask-image: url('./images/copy.svg');
 }
 
 .button-container {
@@ -192,8 +190,29 @@ h3 {
     justify-content: center;
     gap: 1.25rem;
     margin: 1.25rem auto;
+    max-width: 920px;
+    width: 90%;
 }
 
+.button-container .action-button {
+    flex: 1;
+    min-width: 0;
+    max-width: 7.5rem;
+}
+
+#shareButton::after {
+    mask-image: url('./images/share.svg');
+    width: 1.25em;
+    height: 1.25em;
+    transform: scale(1.20);
+}
+
+#copyButton::after {
+    mask-image: url('./images/copy.svg');
+    width: 1.25em;
+    height: 1.25em;
+    transform: scale(1.00);
+}
 footer {
     display: flex;
     align-items: center;
