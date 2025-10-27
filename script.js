@@ -1,17 +1,10 @@
 function selectThemeWithLuma(bgColor) {
-  // Remove leading #
-  let hex = bgColor.replace(/^#/, '');
-
-  // Parse RGB
-  const r = parseInt(hex.substring(0, 2), 16);
-  const g = parseInt(hex.substring(2, 4), 16);
-  const b = parseInt(hex.substring(4, 6), 16);
-
-  // Apple-like "perceptual" brightness (no gamma correction)
-  // Uses Rec.709 luma coefficients
-  const Y = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  // Get luma value from luma.js
+  const Y = getLuma(bgColor);
 
   // Threshold: roughly midpoint (127.5)
+  // Y ≤ 127.5 = dark background, use dark theme with light text
+  // Y > 127.5 = light background, use light theme with dark text
   return Y <= 127.5;
 }
 
