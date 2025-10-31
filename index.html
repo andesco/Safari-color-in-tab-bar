@@ -22,8 +22,10 @@
 <meta name="theme-color" content="#FDFAE0">
 </head>
 
-<body style="background-color: #0044ff;">
-    
+<body style="background-color: #0088FF;">
+    <div id="menu-top"></div>
+    <div id="menu-bottom"></div>
+
 <h1 id="site-title">Safari Demo: Color in Tab Bar</h1>
 
     <h2>macOS: Safari › Setting › Tabs › Appearance: ✓ Show color in tab bar</h2>
@@ -39,21 +41,28 @@
     <div class="card-container card-background">
         <h4 class="code-gen-title">Body Background Color</h4>
         <div id="color-picker-body"></div>
-        <input type="text" id="color-input-body" value="rgb(0, 64, 255)" autocomplete="off" class="code-gen">
+        <input type="text" id="color-input-body" value="#0088FF" autocomplete="off" class="code-gen" placeholder="not set">
     </div>
-<!-- second card-container for body background -->
+<!-- second card-container for menu background -->
+    <div class="card-container card-menu">
+        <h4 class="code-gen-title">Menu Background Color</h4>
+        <div id="color-picker-menu"></div>
+        <input type="text" id="color-input-menu" value="#FF8800" autocomplete="off" class="code-gen" placeholder="not set">
+    </div>
+<!-- third card-container for meta theme -->
     <div class="card-container card-theme">
         <h4 class="code-gen-title">Meta Theme Color</h4>
         <div id="color-picker-meta"></div>
-        <input type="text" id="color-input-meta" value="#FDFAE0" autocomplete="off" class="code-gen">
+        <input type="text" id="color-input-meta" value="" autocomplete="off" class="code-gen" placeholder="not set">
     </div>
 </div>
 
-<!-- third card-container for generated code -->
-    <div class="card-container card-background">
+<!-- fourth card-container for generated code -->
+    <div class="card-container">
         <h4 class="code-gen-title">Generated Code</h4>
-        <code id="code-gen-body" class="language-html code-gen">&lt;body style="background-color: rgb(0, 64, 255);"&gt;&lt;/body&gt;</code>
-        <code id="code-gen-line1" class="language-html code-gen">&lt;meta name="theme-color" content="#FDFAE0"&gt;</code>
+        <code id="code-gen-body" class="language-html code-gen"></code>
+        <code id="code-gen-meta" class="language-html code-gen"></code>
+        <code id="code-gen-menu" class="language-html code-gen"></code>
     </div>
 
 <script src="luma.js"></script>

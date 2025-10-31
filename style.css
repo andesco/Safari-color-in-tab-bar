@@ -1,8 +1,31 @@
 body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    font-family: -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
     box-sizing: border-box;
-    margin: 0 15px;
+    margin: 0;
+    padding-top: 2rem;
     text-align: center;
+}
+
+#menu-top {
+    position: fixed;
+    top: 4px; /* <5px to supersede <body> on iOS and macOS*/
+    left: 0;
+    margin: 0;
+    padding: 0;
+    width: 89%; /* >79% to superced <body> on macOS; >88% to superced <body> on macOS; */
+    min-height: 3px; /* >2px for dynamic color on macOS */
+    z-index: 1000;
+}
+
+#menu-bottom {
+    position: fixed;
+    bottom: 3px; /* <4px to supersede <body> on iOS*/
+    left: 0;
+    margin: 0;
+    padding: 0;
+    width: 89%; /* >88% to superced <body> on iOS*/
+    min-height: 3px; /* >2px for dynamic color iOS */
+    z-index: 1000;
 }
 
 body.dark-theme {
@@ -39,19 +62,18 @@ body.light-theme {
     align-items: center;
     padding: 0;
     margin: 0;
-    min-width: 320px;
-    flex: 1;
     border-radius: 8px;
 }
 
 .cards-flex-wrapper .card-container {
-    max-width: 450px;
+    width: 280px;
+    flex-shrink: 0;
 }
 
 .card-container:not(.cards-flex-wrapper .card-container) {
     margin: 1.25rem auto;
-    max-width: 920px;
-    width: 90%;
+    width: calc(840px + 2.5rem);
+    max-width: 90%;
 }
 
 .card-content {
@@ -62,8 +84,25 @@ body.light-theme {
 }
 
 .card-background,
-.card-theme {
+.card-theme,
+.card-menu {
     box-shadow: rgba(0, 0, 0, 0.2) 0px 0px 10px -4px;
+}
+
+/* Checkered transparency pattern for unset colors */
+.card-container.not-set {
+    background-image:
+        linear-gradient(45deg, #ccc 25%, transparent 25%),
+        linear-gradient(-45deg, #ccc 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #ccc 75%),
+        linear-gradient(-45deg, transparent 75%, #ccc 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+    background-color: #fff;
+}
+
+.card-container.not-set h4 {
+    color: #000000 !important;
 }
 
 
@@ -83,6 +122,11 @@ ion Mono, monospace;
 }
 
 .dark-theme input.code-gen {
+    background-color: #333;
+    color: #FFF;
+}
+
+.dark-theme code.code-gen {
     background-color: #333;
     color: #FFF;
 }
@@ -223,7 +267,7 @@ footer {
     justify-content: center;
     font-size: 1em;
     padding: 0;
-    margin-bottom: 1em;
+    margin-bottom: 3rem;
 }
 
 footer a {
