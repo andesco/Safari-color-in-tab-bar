@@ -137,7 +137,7 @@ function getTriadicColors(hex) {
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log("DOMContentLoaded fired");
-    console.log("window.iro available:", typeof window.iro);
+    console.log("ColorPicker available:", typeof ColorPicker);
 
     const highlightJsLightTheme = document.querySelector('link[href*="github.min.css"]');
     const highlightJsDarkTheme = document.querySelector('link[href*="github-dark-dimmed.min.css"]');
@@ -189,8 +189,8 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log("Attempting to create body color picker");
     console.log("Element #color-picker-body exists:", !!document.getElementById("color-picker-body"));
 
-    if (!window.iro) {
-        console.error("window.iro is not available! The iro.js library did not load.");
+    if (typeof ColorPicker === 'undefined') {
+        console.error("ColorPicker is not available! The color-picker library did not load.");
         return;
     }
 
@@ -207,13 +207,13 @@ document.addEventListener('DOMContentLoaded', function() {
     let isMenuClearing = false;
 
     function initializeColorPickers() {
-        bodyColorPicker = new window.iro.ColorPicker("#color-picker-body", {
-            width: 187,
-            color: "#0088FF"
-        });
+        const bodyPickerInput = document.getElementById("color-picker-body");
+        bodyColorPicker = new ColorPicker(bodyPickerInput);
         // Input value is set in HTML to #0088FF
 
-        bodyColorPicker.on("color:change", updateBodyColors);
+        bodyPickerInput.addEventListener("colorpicker.change", function(e) {
+            updateBodyColors(e.detail.colors.hex);
+        });
         bodyColorInput.addEventListener('change', function() {
             if (this.value.trim() === '') {
                 // Set flag to prevent circular update
@@ -221,14 +221,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // Clear the color - reset to default state
                 document.body.style.backgroundColor = '';
-                const cardBackground = document.querySelector('.cards-flex-wrapper .card-background');
-                if (cardBackground) {
-                    cardBackground.style.backgroundColor = '';
-                    cardBackground.classList.add('not-set');
-                }
                 // Set color picker to gray (this will trigger updateBodyColors)
                 try {
-                    bodyColorPicker.color.set('#808080');
+                    document.getElementById("color-picker-body").value = '#808080';
                 } catch (e) {
                     console.error("Failed to set body color picker to gray:", e);
                 }
@@ -250,20 +245,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 }, 0);
             } else {
                 try {
-                    bodyColorPicker.color.set(this.value);
+                    document.getElementById("color-picker-body").value = this.value;
                 } catch (e) {
                     console.error("Invalid color value:", e);
                 }
             }
         });
 
-        metaColorPicker = new window.iro.ColorPicker("#color-picker-meta", {
-            width: 187,
-            color: "#808080"
-        });
+        const metaPickerInput = document.getElementById("color-picker-meta");
+        metaColorPicker = new ColorPicker(metaPickerInput);
         // Don't set input value initially - wait for user interaction or URL param
 
-        metaColorPicker.on("color:change", updateMetaColors);
+        metaPickerInput.addEventListener("colorpicker.change", function(e) {
+            updateMetaColors(e.detail.colors.hex);
+        });
         metaColorInput.addEventListener('change', function() {
             if (this.value.trim() === '') {
                 // Set flag to prevent circular update
@@ -274,14 +269,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (metaThemeColor) {
                     metaThemeColor.content = '';
                 }
-                const cardTheme = document.querySelector('.cards-flex-wrapper .card-theme');
-                if (cardTheme) {
-                    cardTheme.style.backgroundColor = '';
-                    cardTheme.classList.add('not-set');
-                }
                 // Set color picker to gray (this will trigger updateMetaColors)
                 try {
-                    metaColorPicker.color.set('#808080');
+                    document.getElementById("color-picker-meta").value = '#808080';
                 } catch (e) {
                     console.error("Failed to set meta color picker to gray:", e);
                 }
@@ -299,20 +289,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 }, 0);
             } else {
                 try {
-                    metaColorPicker.color.set(this.value);
+                    document.getElementById("color-picker-meta").value = this.value;
                 } catch (e) {
                     console.error("Invalid color value:", e);
                 }
             }
         });
 
-        menuColorPicker = new window.iro.ColorPicker("#color-picker-menu", {
-            width: 187,
-            color: "#FF8800"
-        });
+        const menuPickerInput = document.getElementById("color-picker-menu");
+        menuColorPicker = new ColorPicker(menuPickerInput);
         // Default color set to #FF8800
 
-        menuColorPicker.on("color:change", updateMenuColors);
+        menuPickerInput.addEventListener("colorpicker.change", function(e) {
+            updateMenuColors(e.detail.colors.hex);
+        });
         menuColorInput.addEventListener('change', function() {
             if (this.value.trim() === '') {
                 // Set flag to prevent circular update
@@ -327,14 +317,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (menuBottomElement) {
                     menuBottomElement.style.backgroundColor = '';
                 }
-                const cardMenu = document.querySelector('.cards-flex-wrapper .card-menu');
-                if (cardMenu) {
-                    cardMenu.style.backgroundColor = '';
-                    cardMenu.classList.add('not-set');
-                }
                 // Set color picker to gray (this will trigger updateMenuColors)
                 try {
-                    menuColorPicker.color.set('#808080');
+                    document.getElementById("color-picker-menu").value = '#808080';
                 } catch (e) {
                     console.error("Failed to set menu color picker to gray:", e);
                 }
@@ -352,7 +337,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }, 0);
             } else {
                 try {
-                    menuColorPicker.color.set(this.value);
+                    document.getElementById("color-picker-menu").value = this.value;
                 } catch (e) {
                     console.error("Invalid color value:", e);
                 }
@@ -370,9 +355,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const footerElement = document.querySelector("footer");
 
     function updateURLParams() {
-        const bodyColorHex = (bodyColorPicker && bodyColorPicker.color) ? bodyColorPicker.color.hex.substring(1) : '';
-        const metaColorHex = (metaColorPicker && metaColorPicker.color) ? metaColorPicker.color.hex.substring(1) : '';
-        const menuColorHex = (menuColorPicker && menuColorPicker.color) ? menuColorPicker.color.hex.substring(1) : '';
+        const bodyColorHex = document.getElementById("color-picker-body").value ? document.getElementById("color-picker-body").value.substring(1) : '';
+        const metaColorHex = document.getElementById("color-picker-meta").value ? document.getElementById("color-picker-meta").value.substring(1) : '';
+        const menuColorHex = document.getElementById("color-picker-menu").value ? document.getElementById("color-picker-menu").value.substring(1) : '';
 
         const newUrl = new URL(window.location.origin + window.location.pathname);
         if (bodyColorHex) {
@@ -387,14 +372,13 @@ document.addEventListener('DOMContentLoaded', function() {
         history.replaceState(null, '', newUrl.toString());
     }
 
-            function updateBodyColors(color) {
+            function updateBodyColors(hexColor) {
                 // Skip updating input if we're in the process of clearing it
                 if (isBodyClearing) {
                     return;
                 }
 
-                const rgb = `rgb(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b})`;
-                const hex = color.hexString.toUpperCase();
+                const hex = hexColor.toUpperCase();
 
                 document.body.style.backgroundColor = hex;
                 bodyColorInput.value = hex; // Update input field
@@ -402,19 +386,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     codeGenBody.textContent = `<body style="background-color: ${hex};"></body>`;
                     delete codeGenBody.dataset.highlighted;
                     hljs.highlightElement(codeGenBody);
-                }
-
-                // Set card-background background color
-                const cardBackground = document.querySelector('.cards-flex-wrapper .card-background');
-                if (cardBackground) {
-                    cardBackground.style.backgroundColor = hex;
-                    cardBackground.classList.remove('not-set'); // Remove transparency pattern
-                    const useDarkThemeWithLightText = selectThemeWithLuma(hex);
-                    const textColor = useDarkThemeWithLightText ? '#FFFFFF' : '#000000';
-                    const h4 = cardBackground.querySelector('h4');
-                    if (h4) {
-                        h4.style.color = textColor;
-                    }
                 }
 
                 const useDarkThemeWithLightText = selectThemeWithLuma(hex);
@@ -441,15 +412,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const allCardContainers = document.querySelectorAll(".card-container");
 
-                    function updateMetaColors(color) {
+                    function updateMetaColors(hexColor) {
                         // Skip updating input if we're in the process of clearing it
                         if (isMetaClearing) {
                             return;
                         }
 
-                        const hex = color.hexString.toUpperCase();
-
-                        const rgb = `rgb(${color.rgb.r}, ${color.rgb.g}, ${color.rgb.b})`;
+                        const hex = hexColor.toUpperCase();
 
 
 
@@ -467,25 +436,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
                                                 }
 
-
-
-                                                                const useDarkThemeWithLightText = selectThemeWithLuma(hex);
-
-                                                                const textColor = useDarkThemeWithLightText ? '#FFFFFF' : '#000000';
-
-
-
-                                                        // Update card-theme background
-                                                        const cardTheme = document.querySelector('.cards-flex-wrapper .card-theme');
-                                                        if (cardTheme) {
-                                                            cardTheme.style.backgroundColor = hex;
-                                                            cardTheme.classList.remove('not-set'); // Remove transparency pattern
-                                                            const h4 = cardTheme.querySelector('h4');
-                                                            if (h4) {
-                                                                h4.style.color = textColor;
-                                                            }
-                                                        }
-
                                 // updateURLParams();
 
                     }
@@ -494,13 +444,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const menuBottomElement = document.getElementById("menu-bottom");
     const codeGenMenu = document.getElementById("code-gen-menu");
 
-    function updateMenuColors(color) {
+    function updateMenuColors(hexColor) {
         // Skip updating input if we're in the process of clearing it
         if (isMenuClearing) {
             return;
         }
 
-        const hex = color.hexString.toUpperCase();
+        const hex = hexColor.toUpperCase();
 
         if (menuTopElement) {
             menuTopElement.style.backgroundColor = hex;
@@ -516,19 +466,6 @@ document.addEventListener('DOMContentLoaded', function() {
             codeGenMenu.textContent = `<div id="menu-top" style="background-color: ${hex};"></div>`;
             delete codeGenMenu.dataset.highlighted;
             hljs.highlightElement(codeGenMenu);
-        }
-
-        // Set card-menu background color
-        const cardMenu = document.querySelector('.cards-flex-wrapper .card-menu');
-        if (cardMenu) {
-            cardMenu.style.backgroundColor = hex;
-            cardMenu.classList.remove('not-set'); // Remove transparency pattern
-            const useDarkThemeWithLightText = selectThemeWithLuma(hex);
-            const textColor = useDarkThemeWithLightText ? '#FFFFFF' : '#000000';
-            const h4 = cardMenu.querySelector('h4');
-            if (h4) {
-                h4.style.color = textColor;
-            }
         }
 
         // updateURLParams();
@@ -589,7 +526,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (initialBodyColor) {
             try {
-                bodyColorPicker.color.set(initialBodyColor);
+                document.getElementById("color-picker-body").value = initialBodyColor;
                 bodyColorInput.value = initialBodyColor;
             } catch (e) {
                 console.error("Failed to set body color from URL:", e);
@@ -598,14 +535,14 @@ document.addEventListener('DOMContentLoaded', function() {
             // Explicitly set to false - clear the input and set picker to gray
             bodyColorInput.value = '';
             try {
-                bodyColorPicker.color.set("#808080");
+                document.getElementById("color-picker-body").value = "#808080";
             } catch (e) {
                 console.error("Failed to set body color picker to gray:", e);
             }
         } else {
             // Set default body color to match input default
             try {
-                bodyColorPicker.color.set("#0088FF");
+                document.getElementById("color-picker-body").value = "#0088FF";
                 bodyColorInput.value = "#0088FF";
             } catch (e) {
                 console.error("Failed to set default body color:", e);
@@ -614,7 +551,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (initialMetaColor) {
             try {
-                metaColorPicker.color.set(initialMetaColor);
+                document.getElementById("color-picker-meta").value = initialMetaColor;
                 metaColorInput.value = initialMetaColor;
             } catch (e) {
                 console.error("Failed to set meta color from URL:", e);
@@ -623,14 +560,14 @@ document.addEventListener('DOMContentLoaded', function() {
             // Explicitly set to false - clear the input and set picker to gray
             metaColorInput.value = '';
             try {
-                metaColorPicker.color.set("#808080");
+                document.getElementById("color-picker-meta").value = "#808080";
             } catch (e) {
                 console.error("Failed to set meta color picker to gray:", e);
             }
         } else {
             // No meta param in URL - set picker to gray but don't set input
             try {
-                metaColorPicker.color.set("#808080");
+                document.getElementById("color-picker-meta").value = "#808080";
             } catch (e) {
                 console.error("Failed to set meta color picker to gray:", e);
             }
@@ -639,7 +576,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (initialMenuColor) {
             try {
-                menuColorPicker.color.set(initialMenuColor);
+                document.getElementById("color-picker-menu").value = initialMenuColor;
                 menuColorInput.value = initialMenuColor;
             } catch (e) {
                 console.error("Failed to set menu color from URL:", e);
@@ -648,14 +585,14 @@ document.addEventListener('DOMContentLoaded', function() {
             // Explicitly set to false - clear the input and set picker to gray
             menuColorInput.value = '';
             try {
-                menuColorPicker.color.set("#808080");
+                document.getElementById("color-picker-menu").value = "#808080";
             } catch (e) {
                 console.error("Failed to set menu color picker to gray:", e);
             }
         } else if (!menuParamExists) {
             // No menu param in URL - set default
             try {
-                menuColorPicker.color.set("#FF8800");
+                document.getElementById("color-picker-menu").value = "#FF8800";
                 menuColorInput.value = "#FF8800";
             } catch (e) {
                 console.error("Failed to set default menu color:", e);
@@ -673,7 +610,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // URL param exists - it supersedes default
         if (bodyParam && bodyParam.trim() !== '' && bodyParam.toLowerCase() !== 'false') {
             // Has a color value
-            updateBodyColors(bodyColorPicker.color);
+            updateBodyColors(document.getElementById("color-picker-body").value);
         } else {
             // =false or empty - leave blank/unset, but apply theme as if white
             document.body.style.backgroundColor = '';
@@ -682,11 +619,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 codeGenBody.textContent = `<body style=""></body>`;
                 delete codeGenBody.dataset.highlighted;
                 hljs.highlightElement(codeGenBody);
-            }
-            const cardBackground = document.querySelector('.cards-flex-wrapper .card-background');
-            if (cardBackground) {
-                cardBackground.style.backgroundColor = '';
-                cardBackground.classList.add('not-set');
             }
 
             // Apply theme based on white background
@@ -706,7 +638,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     } else {
         // No param in URL - use default #0044FF
-        updateBodyColors(bodyColorPicker.color);
+        updateBodyColors(document.getElementById("color-picker-body").value);
     }
 
     // Apply meta color: URL param supersedes default (which is unset)
@@ -715,7 +647,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // URL param exists - it supersedes default
         if (metaParam && metaParam.trim() !== '' && metaParam.toLowerCase() !== 'false') {
             // Has a color value
-            updateMetaColors(metaColorPicker.color);
+            updateMetaColors(document.getElementById("color-picker-meta").value);
         } else {
             // =false or empty - leave blank/unset
             metaThemeColor.content = '';
@@ -724,11 +656,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 codeGenMeta.textContent = `<head>\n  <meta name="theme-color" content="">\n</head>`;
                 delete codeGenMeta.dataset.highlighted;
                 hljs.highlightElement(codeGenMeta);
-            }
-            const cardTheme = document.querySelector('.cards-flex-wrapper .card-theme');
-            if (cardTheme) {
-                cardTheme.style.backgroundColor = '';
-                cardTheme.classList.add('not-set');
             }
         }
     } else {
@@ -740,10 +667,6 @@ document.addEventListener('DOMContentLoaded', function() {
             delete codeGenMeta.dataset.highlighted;
             hljs.highlightElement(codeGenMeta);
         }
-        const cardTheme = document.querySelector('.cards-flex-wrapper .card-theme');
-        if (cardTheme) {
-            cardTheme.classList.add('not-set');
-        }
     }
 
     // Apply menu color: URL param supersedes default
@@ -752,7 +675,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // URL param exists - it supersedes default
         if (menuParam && menuParam.trim() !== '' && menuParam.toLowerCase() !== 'false') {
             // Has a color value
-            updateMenuColors(menuColorPicker.color);
+            updateMenuColors(document.getElementById("color-picker-menu").value);
         } else {
             // =false or empty - leave blank/unset
             if (menuTopElement) menuTopElement.style.backgroundColor = '';
@@ -763,15 +686,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 delete codeGenMenu.dataset.highlighted;
                 hljs.highlightElement(codeGenMenu);
             }
-            const cardMenu = document.querySelector('.cards-flex-wrapper .card-menu');
-            if (cardMenu) {
-                cardMenu.style.backgroundColor = '';
-                cardMenu.classList.add('not-set');
-            }
         }
     } else {
         // No param in URL - use default #E39824
-        updateMenuColors(menuColorPicker.color);
+        updateMenuColors(document.getElementById("color-picker-menu").value);
     }
 
     // Initialize highlight.js after initial colors are set
@@ -792,17 +710,26 @@ document.addEventListener('DOMContentLoaded', function() {
             let metaColorHex = '';
             let menuColorHex = '';
 
-            if (bodyColorInput && bodyColorInput.value.trim() !== '' && bodyColorPicker && bodyColorPicker.color && bodyColorPicker.color.hexString) {
-                bodyColorHex = bodyColorPicker.color.hexString.substring(1).toUpperCase();
+            if (bodyColorInput && bodyColorInput.value.trim() !== '') {
+                const pickerValue = document.getElementById("color-picker-body").value;
+                if (pickerValue) {
+                    bodyColorHex = pickerValue.substring(1).toUpperCase();
+                }
             }
 
-            if (metaColorInput && metaColorInput.value.trim() !== '' && metaColorPicker && metaColorPicker.color && metaColorPicker.color.hexString) {
-                metaColorHex = metaColorPicker.color.hexString.substring(1).toUpperCase();
+            if (metaColorInput && metaColorInput.value.trim() !== '') {
+                const pickerValue = document.getElementById("color-picker-meta").value;
+                if (pickerValue) {
+                    metaColorHex = pickerValue.substring(1).toUpperCase();
+                }
             }
 
             // Only include menu color if it has been set (input has value)
-            if (menuColorInput && menuColorInput.value.trim() !== '' && menuColorPicker && menuColorPicker.color && menuColorPicker.color.hexString) {
-                menuColorHex = menuColorPicker.color.hexString.substring(1).toUpperCase();
+            if (menuColorInput && menuColorInput.value.trim() !== '') {
+                const pickerValue = document.getElementById("color-picker-menu").value;
+                if (pickerValue) {
+                    menuColorHex = pickerValue.substring(1).toUpperCase();
+                }
             }
 
             const shareUrl = new URL(window.location.origin + window.location.pathname);
@@ -842,14 +769,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const copyButton = document.getElementById("copyButton");
     if (copyButton) {
         copyButton.addEventListener("click", async () => {
-            console.log('bodyColorPicker.color object:', bodyColorPicker.color);
-            console.log('metaColorPicker.color object:', metaColorPicker.color);
-            console.log('menuColorPicker.color object:', menuColorPicker.color);
+            console.log('bodyColorPicker value:', document.getElementById("color-picker-body").value);
+            console.log('metaColorPicker value:', document.getElementById("color-picker-meta").value);
+            console.log('menuColorPicker value:', document.getElementById("color-picker-menu").value);
 
             // Only include colors if input has a value
-            const bodyColorHex = (bodyColorInput && bodyColorInput.value.trim() !== '' && bodyColorPicker.color.hexString) ? bodyColorPicker.color.hexString.substring(1).toUpperCase() : '';
-            const metaColorHex = (metaColorInput && metaColorInput.value.trim() !== '' && metaColorPicker.color.hexString) ? metaColorPicker.color.hexString.substring(1).toUpperCase() : '';
-            const menuColorHex = (menuColorInput && menuColorInput.value.trim() !== '' && menuColorPicker.color.hexString) ? menuColorPicker.color.hexString.substring(1).toUpperCase() : '';
+            const bodyColorHex = (bodyColorInput && bodyColorInput.value.trim() !== '' && document.getElementById("color-picker-body").value) ? document.getElementById("color-picker-body").value.substring(1).toUpperCase() : '';
+            const metaColorHex = (metaColorInput && metaColorInput.value.trim() !== '' && document.getElementById("color-picker-meta").value) ? document.getElementById("color-picker-meta").value.substring(1).toUpperCase() : '';
+            const menuColorHex = (menuColorInput && menuColorInput.value.trim() !== '' && document.getElementById("color-picker-menu").value) ? document.getElementById("color-picker-menu").value.substring(1).toUpperCase() : '';
 
             console.log('Copy Button Clicked:');
             console.log('bodyColorHex:', bodyColorHex);

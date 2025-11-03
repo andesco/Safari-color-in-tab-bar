@@ -5,10 +5,11 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Safari Demo: Color in Tab Bar</title>
-<script src="https://cdn.jsdelivr.net/npm/@jaames/iro@5"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@thednp/color-picker@2/dist/css/color-picker.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github-dark-dimmed.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@thednp/color-picker@2/dist/js/color-picker.min.js"></script>
 <meta property="og:title" content="Safari: Color in Tab Bar · Demo" />
 <meta name="author" content="Andrew Escobar" />
 <meta property="og:locale" content="en_US" />
@@ -38,21 +39,27 @@
 
 <div class="cards-flex-wrapper">
 <!-- first card-container for body background -->
-    <div class="card-container card-background">
+    <div class="card-container">
         <h4 class="code-gen-title">Body Background Color</h4>
-        <div id="color-picker-body"></div>
+        <div class="color-picker">
+            <input type="text" id="color-picker-body" class="color-preview" value="#0088FF" autocomplete="off" spellcheck="false" data-function="color-picker" data-format="hex">
+        </div>
         <input type="text" id="color-input-body" value="#0088FF" autocomplete="off" class="code-gen" placeholder="not set">
     </div>
 <!-- second card-container for menu background -->
-    <div class="card-container card-menu">
+    <div class="card-container">
         <h4 class="code-gen-title">Menu Background Color</h4>
-        <div id="color-picker-menu"></div>
+        <div class="color-picker">
+            <input type="text" id="color-picker-menu" class="color-preview" value="#FF8800" autocomplete="off" spellcheck="false" data-function="color-picker" data-format="hex">
+        </div>
         <input type="text" id="color-input-menu" value="#FF8800" autocomplete="off" class="code-gen" placeholder="not set">
     </div>
 <!-- third card-container for meta theme -->
-    <div class="card-container card-theme">
+    <div class="card-container">
         <h4 class="code-gen-title">Meta Theme Color</h4>
-        <div id="color-picker-meta"></div>
+        <div class="color-picker">
+            <input type="text" id="color-picker-meta" class="color-preview" value="#808080" autocomplete="off" spellcheck="false" data-function="color-picker" data-format="hex">
+        </div>
         <input type="text" id="color-input-meta" value="" autocomplete="off" class="code-gen" placeholder="not set">
     </div>
 </div>
