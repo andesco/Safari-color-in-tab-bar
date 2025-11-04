@@ -34,6 +34,35 @@ function selectThemeWithLuma(bgColor) {
   return Y <= 127.5;
 }
 
+// Check if 6-digit hex can be shortened to 3-digit
+// Can only shorten if each character appears twice: AABBCC → ABC
+function canShortenHex(hex) {
+    // Remove # if present and ensure uppercase
+    const clean = hex.replace(/^#/, '').toUpperCase();
+    if (clean.length !== 6) return false;
+
+    // Check if pattern is AABBCC (each char doubles)
+    return clean[0] === clean[1] && clean[2] === clean[3] && clean[4] === clean[5];
+}
+
+// Shorten 6-digit hex to 3-digit: 0088FF → 08F
+function shortenHex(hex) {
+    const clean = hex.replace(/^#/, '').toUpperCase();
+    if (clean.length === 6 && canShortenHex(clean)) {
+        return clean[0] + clean[2] + clean[4];
+    }
+    return clean; // Return as-is if can't shorten
+}
+
+// Expand 3-digit hex to 6-digit: 08F → 0088FF
+function expandHex(hex) {
+    const clean = hex.replace(/^#/, '').toUpperCase();
+    if (clean.length === 3) {
+        return clean[0] + clean[0] + clean[1] + clean[1] + clean[2] + clean[2];
+    }
+    return clean; // Already 6 digits or invalid
+}
+
 function hexToRgb(hex) {
     const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
     hex = hex.replace(shorthandRegex, (m, r, g, b) => r + r + g + g + b + b);
@@ -350,27 +379,33 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Capture initial URL parameter values BEFORE initializing pickers
     const urlParams = new URLSearchParams(window.location.search);
-    const capturedBodyParam = urlParams.get('body');
-    const capturedFixedParam = urlParams.get('fixed');
-    const capturedMetaParam = urlParams.get('meta');
+    const capturedBodyParam = urlParams.get('b');
+    const capturedFixedParam = urlParams.get('f');
+    const capturedMetaParam = urlParams.get('m');
 
-    // Helper function to extract color from "checked,color" format
+    // Helper function to extract color from param
+    // New format: "08F" or "0088FF" (checked, implicit) or "0,08F" or "0,0088FF" (unchecked, explicit)
+    // Old format: "1,0088FF" (checked) or "0,0088FF" (unchecked)
     const extractColorFromParam = (param) => {
         if (!param || param.trim() === '' || param.toLowerCase() === 'false' || param.toLowerCase() === 'none') {
             return '';
         }
-        // Check if format is "checked,color"
+        // Check if format includes comma (explicit checkbox state)
         const parts = param.split(',');
         if (parts.length === 2) {
             const colorValue = parts[1].trim();
             if (colorValue.match(/^[0-9a-fA-F]{3,6}$/)) {
-                return `#${colorValue.toUpperCase()}`;
+                // Expand 3-digit to 6-digit if needed
+                const expanded = expandHex(colorValue);
+                return `#${expanded}`;
             }
             return colorValue;
         }
-        // Fallback for old format without checkbox state
+        // No comma = implicit checked state, entire value is the color
         if (param.match(/^[0-9a-fA-F]{3,6}$/)) {
-            return `#${param.toUpperCase()}`;
+            // Expand 3-digit to 6-digit if needed
+            const expanded = expandHex(param);
+            return `#${expanded}`;
         }
         return param;
     };
@@ -791,19 +826,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function updateURLParams() {
         const bodyPickerValue = document.getElementById("color-picker-body").value;
-        const bodyColorHex = (bodyPickerValue && bodyPickerValue !== 'inherit') ? bodyPickerValue.substring(1) : '';
-        const bodyChecked = bodyCheckbox ? (bodyCheckbox.checked ? '1' : '0') : '1';
+        let bodyColorHex = (bodyPickerValue && bodyPickerValue !== 'inherit') ? bodyPickerValue.substring(1) : '';
+        const bodyChecked = bodyCheckbox ? bodyCheckbox.checked : true;
 
         const metaPickerValue = document.getElementById("color-picker-meta").value;
-        const metaColorHex = (metaPickerValue && metaPickerValue !== 'inherit') ? metaPickerValue.substring(1) : '';
-        const metaChecked = metaCheckbox ? (metaCheckbox.checked ? '1' : '0') : '0';
+        let metaColorHex = (metaPickerValue && metaPickerValue !== 'inherit') ? metaPickerValue.substring(1) : '';
+        const metaChecked = metaCheckbox ? metaCheckbox.checked : false;
 
         const fixedPickerValue = document.getElementById("color-picker-fixed").value;
-        const fixedColorHex = (fixedPickerValue && fixedPickerValue !== 'inherit') ? fixedPickerValue.substring(1) : '';
-        const fixedChecked = fixedCheckbox ? (fixedCheckbox.checked ? '1' : '0') : '0';
+        let fixedColorHex = (fixedPickerValue && fixedPickerValue !== 'inherit') ? fixedPickerValue.substring(1) : '';
+        const fixedChecked = fixedCheckbox ? fixedCheckbox.checked : false;
 
-        // Manually construct URL with literal commas (not encoded)
-        const queryString = `?body=${bodyChecked},${bodyColorHex}&fixed=${fixedChecked},${fixedColorHex}&meta=${metaChecked},${metaColorHex}`;
+        // Try to shorten hex colors to 3 digits if possible
+        bodyColorHex = shortenHex(bodyColorHex);
+        metaColorHex = shortenHex(metaColorHex);
+        fixedColorHex = shortenHex(fixedColorHex);
+
+        // New format: omit "1," prefix when checked (implicit), add "0," when unchecked
+        const bodyParam = bodyChecked ? bodyColorHex : `0,${bodyColorHex}`;
+        const fixedParam = fixedChecked ? fixedColorHex : `0,${fixedColorHex}`;
+        const metaParam = metaChecked ? metaColorHex : `0,${metaColorHex}`;
+
+        const queryString = `?b=${bodyParam}&f=${fixedParam}&m=${metaParam}`;
         const newUrl = window.location.origin + window.location.pathname + queryString;
         history.replaceState(null, '', newUrl);
     }
@@ -938,29 +982,36 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function setInitialColorsFromURL() {
         const urlParams = new URLSearchParams(window.location.search);
-        let bodyColorParam = urlParams.get('body');
-        let metaColorParam = urlParams.get('meta');
-        let fixedColorParam = urlParams.get('fixed');
+        let bodyColorParam = urlParams.get('b');
+        let metaColorParam = urlParams.get('m');
+        let fixedColorParam = urlParams.get('f');
 
-        // Parse checkbox state and color from format "1,COLOR" or "0,COLOR"
+        // Parse checkbox state and color
+        // New format: "08F" or "0088FF" (checked, implicit) or "0,08F" or "0,0088FF" (unchecked, explicit)
+        // Old format: "1,0088FF" (checked) or "0,0088FF" (unchecked)
         const parseParam = (paramStr) => {
             if (!paramStr || paramStr.trim() === '') return { checked: false, color: 'inherit' };
 
             const parts = paramStr.split(',');
             if (parts.length === 2) {
+                // Explicit checkbox state with comma
                 const checked = parts[0] === '1';
                 const colorValue = parts[1].trim();
                 if (!colorValue || colorValue === '') return { checked, color: 'inherit' };
                 if (colorValue.match(/^[0-9a-fA-F]{3,6}$/)) {
-                    return { checked, color: `#${colorValue.toUpperCase()}` };
+                    // Expand 3-digit to 6-digit if needed
+                    const expanded = expandHex(colorValue);
+                    return { checked, color: `#${expanded}` };
                 }
                 return { checked, color: colorValue.toUpperCase() };
             }
 
-            // Fallback for old format without checkbox state
+            // No comma = implicit checked state (new format)
             if (paramStr.toLowerCase() === 'false' || paramStr.toLowerCase() === 'none') return { checked: false, color: 'inherit' };
             if (paramStr.match(/^[0-9a-fA-F]{3,6}$/)) {
-                return { checked: true, color: `#${paramStr.toUpperCase()}` };
+                // Expand 3-digit to 6-digit if needed
+                const expanded = expandHex(paramStr);
+                return { checked: true, color: `#${expanded}` };
             } else if (paramStr.match(/^\d{1,3},\s*\d{1,3},\s*\d{1,3}$/)) {
                 return { checked: true, color: `rgb(${paramStr})` };
             }
@@ -972,9 +1023,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const fixedParam = parseParam(fixedColorParam);
 
         // Check if parameters are explicitly in the URL (not just null/missing)
-        const bodyParamExists = urlParams.has('body');
-        const metaParamExists = urlParams.has('meta');
-        const fixedParamExists = urlParams.has('fixed');
+        const bodyParamExists = urlParams.has('b');
+        const metaParamExists = urlParams.has('m');
+        const fixedParamExists = urlParams.has('f');
 
         // Count how many parameters are set to actual color values (not inherit, not false)
         const paramsSet = [bodyParam.color, metaParam.color, fixedParam.color].filter(c => c !== 'inherit').length;
@@ -983,7 +1034,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const paramsInURL = [bodyParamExists, metaParamExists, fixedParamExists].filter(p => p === true).length;
 
         // Triadic color logic: if only one color is set AND other params are NOT in the URL
-        // (i.e., ?body=1,0044FF should trigger complement, but ?body=1,0044FF&meta=0,&fixed=0, should NOT)
+        // (i.e., ?b=04F or ?b=0044FF should trigger complement, but ?b=04F&m=0,&f=0, should NOT)
         // Fixed uses -120° (counterclockwise), Meta uses +120° (clockwise) from Body
         if (paramsSet === 1 && paramsInURL === 1) {
             if (bodyParam.color && bodyParam.color !== 'inherit') {
@@ -1148,19 +1199,28 @@ document.addEventListener('DOMContentLoaded', function() {
         shareButton.addEventListener("click", () => {
             // Get hex values and checkbox states
             const bodyPickerValue = document.getElementById("color-picker-body").value;
-            const bodyColorHex = (bodyPickerValue && bodyPickerValue !== 'inherit') ? bodyPickerValue.substring(1).toUpperCase() : '';
-            const bodyChecked = bodyCheckbox ? (bodyCheckbox.checked ? '1' : '0') : '1';
+            let bodyColorHex = (bodyPickerValue && bodyPickerValue !== 'inherit') ? bodyPickerValue.substring(1).toUpperCase() : '';
+            const bodyChecked = bodyCheckbox ? bodyCheckbox.checked : true;
 
             const metaPickerValue = document.getElementById("color-picker-meta").value;
-            const metaColorHex = (metaPickerValue && metaPickerValue !== 'inherit') ? metaPickerValue.substring(1).toUpperCase() : '';
-            const metaChecked = metaCheckbox ? (metaCheckbox.checked ? '1' : '0') : '0';
+            let metaColorHex = (metaPickerValue && metaPickerValue !== 'inherit') ? metaPickerValue.substring(1).toUpperCase() : '';
+            const metaChecked = metaCheckbox ? metaCheckbox.checked : false;
 
             const fixedPickerValue = document.getElementById("color-picker-fixed").value;
-            const fixedColorHex = (fixedPickerValue && fixedPickerValue !== 'inherit') ? fixedPickerValue.substring(1).toUpperCase() : '';
-            const fixedChecked = fixedCheckbox ? (fixedCheckbox.checked ? '1' : '0') : '0';
+            let fixedColorHex = (fixedPickerValue && fixedPickerValue !== 'inherit') ? fixedPickerValue.substring(1).toUpperCase() : '';
+            const fixedChecked = fixedCheckbox ? fixedCheckbox.checked : false;
 
-            // Manually construct URL with literal commas (not encoded)
-            const queryString = `?body=${bodyChecked},${bodyColorHex}&fixed=${fixedChecked},${fixedColorHex}&meta=${metaChecked},${metaColorHex}`;
+            // Try to shorten hex colors to 3 digits if possible
+            bodyColorHex = shortenHex(bodyColorHex);
+            metaColorHex = shortenHex(metaColorHex);
+            fixedColorHex = shortenHex(fixedColorHex);
+
+            // New format: omit "1," prefix when checked (implicit), add "0," when unchecked
+            const bodyParam = bodyChecked ? bodyColorHex : `0,${bodyColorHex}`;
+            const fixedParam = fixedChecked ? fixedColorHex : `0,${fixedColorHex}`;
+            const metaParam = metaChecked ? metaColorHex : `0,${metaColorHex}`;
+
+            const queryString = `?b=${bodyParam}&f=${fixedParam}&m=${metaParam}`;
             const shareUrl = window.location.origin + window.location.pathname + queryString;
 
             console.log('Share button clicked');
@@ -1200,24 +1260,33 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Get hex values and checkbox states
             const bodyPickerValue = document.getElementById("color-picker-body").value;
-            const bodyColorHex = (bodyPickerValue && bodyPickerValue !== 'inherit') ? bodyPickerValue.substring(1).toUpperCase() : '';
-            const bodyChecked = bodyCheckbox ? (bodyCheckbox.checked ? '1' : '0') : '1';
+            let bodyColorHex = (bodyPickerValue && bodyPickerValue !== 'inherit') ? bodyPickerValue.substring(1).toUpperCase() : '';
+            const bodyChecked = bodyCheckbox ? bodyCheckbox.checked : true;
 
             const metaPickerValue = document.getElementById("color-picker-meta").value;
-            const metaColorHex = (metaPickerValue && metaPickerValue !== 'inherit') ? metaPickerValue.substring(1).toUpperCase() : '';
-            const metaChecked = metaCheckbox ? (metaCheckbox.checked ? '1' : '0') : '0';
+            let metaColorHex = (metaPickerValue && metaPickerValue !== 'inherit') ? metaPickerValue.substring(1).toUpperCase() : '';
+            const metaChecked = metaCheckbox ? metaCheckbox.checked : false;
 
             const fixedPickerValue = document.getElementById("color-picker-fixed").value;
-            const fixedColorHex = (fixedPickerValue && fixedPickerValue !== 'inherit') ? fixedPickerValue.substring(1).toUpperCase() : '';
-            const fixedChecked = fixedCheckbox ? (fixedCheckbox.checked ? '1' : '0') : '0';
+            let fixedColorHex = (fixedPickerValue && fixedPickerValue !== 'inherit') ? fixedPickerValue.substring(1).toUpperCase() : '';
+            const fixedChecked = fixedCheckbox ? fixedCheckbox.checked : false;
+
+            // Try to shorten hex colors to 3 digits if possible
+            bodyColorHex = shortenHex(bodyColorHex);
+            metaColorHex = shortenHex(metaColorHex);
+            fixedColorHex = shortenHex(fixedColorHex);
 
             console.log('Copy Button Clicked:');
             console.log('bodyColorHex:', bodyColorHex, 'bodyChecked:', bodyChecked);
             console.log('metaColorHex:', metaColorHex, 'metaChecked:', metaChecked);
             console.log('fixedColorHex:', fixedColorHex, 'fixedChecked:', fixedChecked);
 
-            // Manually construct URL with literal commas (not encoded)
-            const queryString = `?body=${bodyChecked},${bodyColorHex}&fixed=${fixedChecked},${fixedColorHex}&meta=${metaChecked},${metaColorHex}`;
+            // New format: omit "1," prefix when checked (implicit), add "0," when unchecked
+            const bodyParam = bodyChecked ? bodyColorHex : `0,${bodyColorHex}`;
+            const fixedParam = fixedChecked ? fixedColorHex : `0,${fixedColorHex}`;
+            const metaParam = metaChecked ? metaColorHex : `0,${metaColorHex}`;
+
+            const queryString = `?b=${bodyParam}&f=${fixedParam}&m=${metaParam}`;
             const copyUrl = window.location.origin + window.location.pathname + queryString;
             console.log('Copy URL:', copyUrl);
 
