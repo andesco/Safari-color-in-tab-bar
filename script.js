@@ -1,3 +1,29 @@
+// Bootstrap Colors preset for color pickers
+const bootstrapColors = [
+  '#031633', '#052c65', '#084298', '#0a58ca', '#0d6efd', '#3d8bfd',
+  '#6ea8fe', '#9ec5fe', '#cfe2ff',
+  '#140330', '#290661', '#3d0a91', '#520dc2', '#6610f2', '#8540f5',
+  '#a370f7', '#c29ffa', '#e0cffc',
+  '#160d27', '#2c1a4d', '#432874', '#59359a', '#6f42c1', '#8c68cd',
+  '#a98eda', '#c5b3e6', '#e2d9f3',
+  '#2b0a1a', '#561435', '#801f4f', '#ab296a', '#d63384', '#de5c9d',
+  '#e685b5', '#efadce', '#f7d6e6',
+  '#2c0b0e', '#58151c', '#842029', '#b02a37', '#dc3545', '#e35d6a',
+  '#ea868f', '#f1aeb5', '#f8d7da',
+  '#331904', '#653208', '#984c0c', '#ca6510', '#fd7e14', '#fd9843',
+  '#feb272', '#fecba1', '#ffe5d0',
+  '#332701', '#664d03', '#997404', '#cc9a06', '#ffc107', '#ffcd39',
+  '#ffda6a', '#ffe69c', '#fff3cd',
+  '#051b11', '#0a3622', '#0f5132', '#146c43', '#198754', '#479f76',
+  '#75b798', '#a3cfbb', '#d1e7dd',
+  '#06281e', '#0d503c', '#13795b', '#1aa179', '#20c997', '#4dd4ac',
+  '#79dfc1', '#a6e9d5', '#d2f4ea',
+  '#032830', '#055160', '#087990', '#0aa2c0', '#0dcaf0', '#3dd5f3',
+  '#6edff6', '#9eeaf9', '#cff4fc',
+  '#212529', '#343a40', '#495057', '#6c757d', '#adb5bd', '#ced4da',
+  '#dee2e6', '#e9ecef', '#f8f9fa',
+];
+
 function selectThemeWithLuma(bgColor) {
   // Get luma value from luma.js
   const Y = getLuma(bgColor);
@@ -17,6 +43,68 @@ function hexToRgb(hex) {
         g: parseInt(result[2], 16),
         b: parseInt(result[3], 16)
     } : null;
+}
+
+// Detect if a string is RGB/RGBA format
+function isRgbFormat(str) {
+    return /^rgba?\s*\(/i.test(str);
+}
+
+// Detect if a string is HEX format
+function isHexFormat(str) {
+    return /^#?[0-9a-fA-F]{3,8}$/.test(str);
+}
+
+// Normalize RGB to no alpha (remove alpha channel)
+function normalizeRgb(rgb) {
+    // Match rgb(r, g, b) or rgba(r, g, b, a) with various formats
+    const match = rgb.match(/rgba?\s*\(\s*(\d+)\s*,?\s*(\d+)\s*,?\s*(\d+)\s*(?:,?\s*[\d.]+\s*)?\)/i);
+    if (match) {
+        const [, r, g, b] = match;
+        return `rgb(${r}, ${g}, ${b})`;
+    }
+    return rgb;
+}
+
+// Normalize hex to 6-digit format (no alpha)
+function normalizeHex(hex) {
+    // Remove # if present
+    hex = hex.replace(/^#/, '');
+
+    // If 3-digit hex, expand to 6-digit
+    if (hex.length === 3) {
+        hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+    }
+
+    // If 8-digit hex (with alpha), strip alpha channel
+    if (hex.length === 8) {
+        hex = hex.substring(0, 6);
+    }
+
+    // If 4-digit hex (with alpha), expand to 6-digit and strip alpha
+    if (hex.length === 4) {
+        hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+    }
+
+    // Ensure we only have 6 characters
+    hex = hex.substring(0, 6);
+
+    // Return with # prefix in uppercase
+    return '#' + hex.toUpperCase();
+}
+
+// Normalize color value based on format
+function normalizeColor(value) {
+    const str = String(value).trim();
+
+    if (isRgbFormat(str)) {
+        return normalizeRgb(str);
+    } else if (isHexFormat(str)) {
+        return normalizeHex(str);
+    }
+
+    // If unknown format, try to normalize as hex
+    return normalizeHex(str);
 }
 
 function rgbToHex(r, g, b) {
@@ -115,7 +203,7 @@ function getComplementaryColor(hex) {
     return hslToHex(complementaryHue, hsl.s, hsl.l);
 }
 
-// Function to get triadic colors (returns array of 3 colors including the original)
+// Function to get complement colors (returns array of 3 colors including the original)
 function getTriadicColors(hex) {
     const hsl = hexToHsl(hex);
     if (!hsl) return null;
@@ -196,33 +284,504 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let bodyColorPicker;
     let metaColorPicker;
-    let menuColorPicker;
+    let fixedColorPicker;
+
+    // Checkbox references
+    let bodyCheckbox;
+    let metaCheckbox;
+    let fixedCheckbox;
+
+    // Store user-entered values to prevent library from changing them
+    let bodyLastValue = '';
+    let metaLastValue = '';
+    let fixedLastValue = '';
+    let isUpdatingBody = false;
+    let isUpdatingMeta = false;
+    let isUpdatingFixed = false;
+
+    // Define fixed and meta change handlers at module scope so they can be reused
+    const handleFixedChange = function(e) {
+        isUpdatingFixed = true;
+        const value = e.target.value;
+        // Allow empty values, "inherit", or "none" keyword
+        if (!value || value.trim() === '' || value.toLowerCase() === 'none' || value.toLowerCase() === 'inherit' || value === 'transparent') {
+            fixedLastValue = 'inherit';
+            e.target.value = 'inherit';
+            // Only update if checkbox is checked
+            if (fixedCheckbox && fixedCheckbox.checked) {
+                updateFixedColors('');
+                // Reload page to force Safari to re-sample colors
+                window.location.reload();
+            }
+        } else {
+            const normalized = normalizeColor(value);
+            fixedLastValue = normalized;
+            // Only update if checkbox is checked
+            if (fixedCheckbox && fixedCheckbox.checked) {
+                updateFixedColors(normalized);
+                // Reload page to force Safari to re-sample colors
+                window.location.reload();
+            }
+        }
+        setTimeout(() => { isUpdatingFixed = false; }, 0);
+    };
+
+    const handleMetaChange = function(e) {
+        isUpdatingMeta = true;
+        const value = e.target.value;
+        // Allow empty values, "inherit", or "none" keyword
+        if (!value || value.trim() === '' || value.toLowerCase() === 'none' || value.toLowerCase() === 'inherit' || value === 'transparent') {
+            metaLastValue = 'inherit';
+            e.target.value = 'inherit';
+            // Only update if checkbox is checked
+            if (metaCheckbox && metaCheckbox.checked) {
+                updateMetaColors('');
+            }
+        } else {
+            const normalized = normalizeColor(value);
+            metaLastValue = normalized;
+            // Only update if checkbox is checked
+            if (metaCheckbox && metaCheckbox.checked) {
+                updateMetaColors(normalized);
+            }
+        }
+        setTimeout(() => { isUpdatingMeta = false; }, 0);
+    };
+
+    // Capture initial URL parameter values BEFORE initializing pickers
+    const urlParams = new URLSearchParams(window.location.search);
+    const capturedBodyParam = urlParams.get('body');
+    const capturedFixedParam = urlParams.get('fixed');
+    const capturedMetaParam = urlParams.get('meta');
+
+    // Helper function to extract color from "checked,color" format
+    const extractColorFromParam = (param) => {
+        if (!param || param.trim() === '' || param.toLowerCase() === 'false' || param.toLowerCase() === 'none') {
+            return '';
+        }
+        // Check if format is "checked,color"
+        const parts = param.split(',');
+        if (parts.length === 2) {
+            const colorValue = parts[1].trim();
+            if (colorValue.match(/^[0-9a-fA-F]{3,6}$/)) {
+                return `#${colorValue.toUpperCase()}`;
+            }
+            return colorValue;
+        }
+        // Fallback for old format without checkbox state
+        if (param.match(/^[0-9a-fA-F]{3,6}$/)) {
+            return `#${param.toUpperCase()}`;
+        }
+        return param;
+    };
+
+    // Store initial values: URL param if exists and valid, otherwise use hardcoded defaults
+    const initialBodyColorValue = extractColorFromParam(capturedBodyParam) || '#0088FF';
+    const initialFixedColorValue = extractColorFromParam(capturedFixedParam) || '#FF7700';
+    const initialMetaColorValue = extractColorFromParam(capturedMetaParam) || '#363636';
 
     function initializeColorPickers() {
-        const bodyPickerInput = document.getElementById("color-picker-body");
-        bodyColorPicker = new ColorPicker(bodyPickerInput);
+        // Get checkbox elements
+        bodyCheckbox = document.getElementById("checkbox-body");
+        metaCheckbox = document.getElementById("checkbox-meta");
+        fixedCheckbox = document.getElementById("checkbox-fixed");
 
-        bodyPickerInput.addEventListener("colorpicker.change", function(e) {
-            updateBodyColors(e.target.value);
+        const bodyPickerInput = document.getElementById("color-picker-body");
+        // Normalize initial value (respects format - HEX or RGB)
+        bodyPickerInput.value = normalizeColor(bodyPickerInput.value);
+        bodyLastValue = bodyPickerInput.value;
+
+        // Set initial data-format based on value
+        if (isRgbFormat(bodyPickerInput.value)) {
+            bodyPickerInput.setAttribute('data-format', 'rgb');
+        } else {
+            bodyPickerInput.setAttribute('data-format', 'hex');
+        }
+
+        // Intercept the value setter to enforce format normalization
+        const bodyDescriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+        const bodyOriginalSet = bodyDescriptor.set;
+        Object.defineProperty(bodyPickerInput, 'value', {
+            get: bodyDescriptor.get,
+            set: function(newValue) {
+                if (!isUpdatingBody) {
+                    const normalized = normalizeColor(String(newValue));
+                    bodyLastValue = normalized;
+
+                    // Update data-format attribute to match current format
+                    if (isRgbFormat(normalized)) {
+                        this.setAttribute('data-format', 'rgb');
+                    } else {
+                        this.setAttribute('data-format', 'hex');
+                    }
+
+                    bodyOriginalSet.call(this, normalized);
+                } else {
+                    bodyOriginalSet.call(this, newValue);
+                }
+            }
         });
+
+        bodyColorPicker = new ColorPicker(bodyPickerInput, {
+            colorPresets: bootstrapColors,
+            colorKeywords: `#0088FF:default,${initialBodyColorValue}:initial`
+        });
+
+        const handleBodyChange = function(e) {
+            // Store the normalized value immediately
+            isUpdatingBody = true;
+            const value = e.target.value;
+
+            // Allow empty values, "inherit", or "none" keyword
+            if (!value || value.trim() === '' || value.toLowerCase() === 'none' || value.toLowerCase() === 'inherit' || value === 'transparent') {
+                bodyLastValue = 'inherit';
+                e.target.value = 'inherit';
+                // Only update if checkbox is checked
+                if (bodyCheckbox && bodyCheckbox.checked) {
+                    updateBodyColors('');
+                }
+
+                // Update fixed and meta pickers' complement colors to use default color
+                const defaultBodyColor = new ColorPicker.Color('#0088FF');
+                const newFixedTriadic = defaultBodyColor.clone().spin(180);
+                const newFixedTriadicHex = newFixedTriadic.toString();
+
+                if (fixedColorPicker) {
+                    const fixedPickerInput = document.getElementById("color-picker-fixed");
+                    const currentFixedValue = fixedPickerInput.value;
+                    fixedColorPicker.dispose();
+                    fixedColorPicker = new ColorPicker(fixedPickerInput, {
+                        colorPresets: bootstrapColors,
+                        colorKeywords: `#FF7700:default,${initialFixedColorValue}:initial,${newFixedTriadicHex}:complement`
+                    });
+                    fixedPickerInput.value = currentFixedValue;
+                    if (currentFixedValue) {
+                        fixedColorPicker.color = new ColorPicker.Color(currentFixedValue);
+                        fixedColorPicker.update();
+                    }
+                    fixedPickerInput.addEventListener("colorpicker.change", handleFixedChange);
+                    fixedPickerInput.addEventListener("input", handleFixedChange);
+                }
+
+                if (metaColorPicker) {
+                    const metaPickerInput = document.getElementById("color-picker-meta");
+                    const currentMetaValue = metaPickerInput.value;
+                    metaColorPicker.dispose();
+
+                    const newTriadic = defaultBodyColor.clone().spin(180);
+                    const newTriadicHex = newTriadic.toString();
+
+                    const metaKeywords = `#363636:default,${initialMetaColorValue}:initial,${newTriadicHex}:complement`;
+
+                    metaColorPicker = new ColorPicker(metaPickerInput, {
+                        colorPresets: bootstrapColors,
+                        colorKeywords: metaKeywords
+                    });
+                    metaPickerInput.value = currentMetaValue;
+                    if (currentMetaValue) {
+                        metaColorPicker.color = new ColorPicker.Color(currentMetaValue);
+                        metaColorPicker.update();
+                    }
+                    metaPickerInput.addEventListener("colorpicker.change", handleMetaChange);
+                    metaPickerInput.addEventListener("input", handleMetaChange);
+                }
+
+                setTimeout(() => { isUpdatingBody = false; }, 0);
+                return;
+            }
+
+            const normalized = normalizeColor(value);
+            bodyLastValue = normalized;
+            // Only update if checkbox is checked
+            if (bodyCheckbox && bodyCheckbox.checked) {
+                updateBodyColors(normalized);
+            }
+
+            // Update fixed and meta pickers' complement colors in colorKeywords
+            const currentBodyColor = bodyColorPicker.color;
+            const newFixedTriadic = currentBodyColor.clone().spin(180);
+            const newFixedTriadicHex = newFixedTriadic.toString();
+
+            if (fixedColorPicker) {
+                // Dispose and recreate the fixed picker with new colorKeywords
+                // Fixed uses -120° complement
+                const fixedPickerInput = document.getElementById("color-picker-fixed");
+                const currentFixedValue = fixedPickerInput.value;
+                fixedColorPicker.dispose();
+                fixedColorPicker = new ColorPicker(fixedPickerInput, {
+                    colorPresets: bootstrapColors,
+                    colorKeywords: `#FF7700:default,${initialFixedColorValue}:initial,${newFixedTriadicHex}:complement`
+                });
+                // Restore the value
+                fixedPickerInput.value = currentFixedValue;
+                fixedColorPicker.color = new ColorPicker.Color(currentFixedValue);
+                fixedColorPicker.update();
+
+                // Re-attach event handlers
+                fixedPickerInput.addEventListener("colorpicker.change", handleFixedChange);
+                fixedPickerInput.addEventListener("input", handleFixedChange);
+            }
+
+            if (metaColorPicker) {
+                // Dispose and recreate the meta picker with new colorKeywords
+                // Meta uses 120° complement instead of 180° complementary
+                const metaPickerInput = document.getElementById("color-picker-meta");
+                const currentMetaValue = metaPickerInput.value;
+                metaColorPicker.dispose();
+
+                const newTriadic = currentBodyColor.clone().spin(180);
+                const newTriadicHex = newTriadic.toString();
+
+                const metaKeywords = initialMetaColorValue
+                    ? `:default,${initialMetaColorValue}:initial,${newTriadicHex}:complement`
+                    : `:default,:initial,${newTriadicHex}:complement`;
+
+                metaColorPicker = new ColorPicker(metaPickerInput, {
+                    colorPresets: bootstrapColors,
+                    colorKeywords: metaKeywords
+                });
+                // Restore the value
+                metaPickerInput.value = currentMetaValue;
+                if (currentMetaValue) {
+                    metaColorPicker.color = new ColorPicker.Color(currentMetaValue);
+                    metaColorPicker.update();
+                }
+
+                // Re-attach event handlers
+                metaPickerInput.addEventListener("colorpicker.change", handleMetaChange);
+                metaPickerInput.addEventListener("input", handleMetaChange);
+            }
+
+            setTimeout(() => { isUpdatingBody = false; }, 0);
+        };
+
+        bodyPickerInput.addEventListener("colorpicker.change", handleBodyChange);
+        bodyPickerInput.addEventListener("input", handleBodyChange);
 
         const metaPickerInput = document.getElementById("color-picker-meta");
-        metaColorPicker = new ColorPicker(metaPickerInput);
+        metaPickerInput.value = normalizeColor(metaPickerInput.value);
+        metaLastValue = metaPickerInput.value;
 
-        metaPickerInput.addEventListener("colorpicker.change", function(e) {
-            updateMetaColors(e.target.value);
+        // Set initial data-format based on value
+        if (isRgbFormat(metaPickerInput.value)) {
+            metaPickerInput.setAttribute('data-format', 'rgb');
+        } else {
+            metaPickerInput.setAttribute('data-format', 'hex');
+        }
+
+        // Intercept the value setter to enforce format normalization
+        const metaDescriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+        const metaOriginalSet = metaDescriptor.set;
+        Object.defineProperty(metaPickerInput, 'value', {
+            get: metaDescriptor.get,
+            set: function(newValue) {
+                if (!isUpdatingMeta) {
+                    const normalized = normalizeColor(String(newValue));
+                    metaLastValue = normalized;
+
+                    // Update data-format attribute to match current format
+                    if (isRgbFormat(normalized)) {
+                        this.setAttribute('data-format', 'rgb');
+                    } else {
+                        this.setAttribute('data-format', 'hex');
+                    }
+
+                    metaOriginalSet.call(this, normalized);
+                } else {
+                    metaOriginalSet.call(this, newValue);
+                }
+            }
         });
 
-        const menuPickerInput = document.getElementById("color-picker-menu");
-        menuColorPicker = new ColorPicker(menuPickerInput);
+        // META colorKeywords: default=#363636, initial=URL param or #363636, complement=120° from body
+        const metaKeywords = `#363636:default,${initialMetaColorValue}:initial,#0088FF:complement`;
 
-        menuPickerInput.addEventListener("colorpicker.change", function(e) {
-            updateMenuColors(e.target.value);
+        metaColorPicker = new ColorPicker(metaPickerInput, {
+            colorPresets: bootstrapColors,
+            colorKeywords: metaKeywords
+        });
+
+        // handleMetaChange is already defined earlier
+        metaPickerInput.addEventListener("colorpicker.change", handleMetaChange);
+        metaPickerInput.addEventListener("input", handleMetaChange);
+
+        const fixedPickerInput = document.getElementById("color-picker-fixed");
+        fixedPickerInput.value = normalizeColor(fixedPickerInput.value);
+        fixedLastValue = fixedPickerInput.value;
+
+        // Set initial data-format based on value
+        if (isRgbFormat(fixedPickerInput.value)) {
+            fixedPickerInput.setAttribute('data-format', 'rgb');
+        } else {
+            fixedPickerInput.setAttribute('data-format', 'hex');
+        }
+
+        // Intercept the value setter to enforce format normalization
+        const fixedDescriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+        const fixedOriginalSet = fixedDescriptor.set;
+        Object.defineProperty(fixedPickerInput, 'value', {
+            get: fixedDescriptor.get,
+            set: function(newValue) {
+                if (!isUpdatingFixed) {
+                    const normalized = normalizeColor(String(newValue));
+                    fixedLastValue = normalized;
+
+                    // Update data-format attribute to match current format
+                    if (isRgbFormat(normalized)) {
+                        this.setAttribute('data-format', 'rgb');
+                    } else {
+                        this.setAttribute('data-format', 'hex');
+                    }
+
+                    fixedOriginalSet.call(this, normalized);
+                } else {
+                    fixedOriginalSet.call(this, newValue);
+                }
+            }
+        });
+
+        // Note: Initial complement will be calculated after body color is synced from URL
+        // For now, use a placeholder that will be updated
+        fixedColorPicker = new ColorPicker(fixedPickerInput, {
+            colorPresets: bootstrapColors,
+            colorKeywords: `#FF7700:default,${initialFixedColorValue}:initial,#0088FF:complement`
+        });
+
+        // handleFixedChange is already defined earlier
+        fixedPickerInput.addEventListener("colorpicker.change", handleFixedChange);
+        fixedPickerInput.addEventListener("input", handleFixedChange);
+
+        // Add checkbox event listeners
+        bodyCheckbox.addEventListener("change", function() {
+            if (bodyCheckbox.checked) {
+                // Apply the current picker value
+                const currentValue = document.getElementById("color-picker-body").value;
+                if (currentValue && currentValue !== 'inherit') {
+                    updateBodyColors(currentValue);
+                }
+            } else {
+                // Remove the color (set background-color to empty)
+                updateBodyColors('');
+            }
+            updateURLParams();
+        });
+
+        metaCheckbox.addEventListener("change", function() {
+            if (metaCheckbox.checked) {
+                // Apply the current picker value
+                const currentValue = document.getElementById("color-picker-meta").value;
+                if (currentValue && currentValue !== 'inherit') {
+                    updateMetaColors(currentValue);
+                }
+            } else {
+                // Remove the color (set content to empty)
+                updateMetaColors('');
+            }
+            updateURLParams();
+        });
+
+        fixedCheckbox.addEventListener("change", function() {
+            if (fixedCheckbox.checked) {
+                // Apply the current picker value
+                const currentValue = document.getElementById("color-picker-fixed").value;
+                if (currentValue && currentValue !== 'inherit') {
+                    updateFixedColors(currentValue);
+                }
+            } else {
+                // Remove the color (set background-color to empty)
+                updateFixedColors('');
+            }
+            updateURLParams();
+            // Reload page to force Safari to re-sample colors
+            window.location.reload();
         });
     }
 
     // Call initializeColorPickers after DOMContentLoaded
     initializeColorPickers();
+
+    // Set initial colors from URL AFTER initializing pickers
+    // then update the pickers to reflect the new values
+    setInitialColorsFromURL();
+
+    // Force update all pickers after URL values are applied
+    // Use the Color class to parse the input value and set picker color
+    if (bodyColorPicker) {
+        const bodyInputValue = document.getElementById("color-picker-body").value;
+        if (bodyInputValue && bodyInputValue !== '') {
+            bodyColorPicker.color = new ColorPicker.Color(bodyInputValue);
+            bodyColorPicker.update();
+
+            // Update fixed and meta pickers' complement colors after body color is set from URL
+            const currentBodyColor = bodyColorPicker.color;
+            const newFixedTriadic = currentBodyColor.clone().spin(180);
+            const newFixedTriadicHex = newFixedTriadic.toString();
+
+            if (fixedColorPicker) {
+                // Dispose and recreate the fixed picker with new colorKeywords
+                // Fixed uses -120° complement
+                const fixedPickerInput = document.getElementById("color-picker-fixed");
+                const currentFixedValue = fixedPickerInput.value;
+                fixedColorPicker.dispose();
+                fixedColorPicker = new ColorPicker(fixedPickerInput, {
+                    colorPresets: bootstrapColors,
+                    colorKeywords: `#FF7700:default,${initialFixedColorValue}:initial,${newFixedTriadicHex}:complement`
+                });
+                // Restore the value and re-attach event handlers
+                fixedPickerInput.value = currentFixedValue;
+                fixedColorPicker.color = new ColorPicker.Color(currentFixedValue);
+                fixedColorPicker.update();
+
+                // handleFixedChange is already defined earlier
+                fixedPickerInput.addEventListener("colorpicker.change", handleFixedChange);
+                fixedPickerInput.addEventListener("input", handleFixedChange);
+            }
+
+            if (metaColorPicker) {
+                // Dispose and recreate the meta picker with new colorKeywords
+                // Meta uses 120° complement instead of 180° complementary
+                const metaPickerInput = document.getElementById("color-picker-meta");
+                const currentMetaValue = metaPickerInput.value;
+                metaColorPicker.dispose();
+
+                const newTriadic = currentBodyColor.clone().spin(180);
+                const newTriadicHex = newTriadic.toString();
+
+                const metaKeywords = initialMetaColorValue
+                    ? `:default,${initialMetaColorValue}:initial,${newTriadicHex}:complement`
+                    : `:default,:initial,${newTriadicHex}:complement`;
+
+                metaColorPicker = new ColorPicker(metaPickerInput, {
+                    colorPresets: bootstrapColors,
+                    colorKeywords: metaKeywords
+                });
+                // Restore the value and re-attach event handlers
+                metaPickerInput.value = currentMetaValue;
+                if (currentMetaValue) {
+                    metaColorPicker.color = new ColorPicker.Color(currentMetaValue);
+                    metaColorPicker.update();
+                }
+
+                // handleMetaChange is already defined earlier
+                metaPickerInput.addEventListener("colorpicker.change", handleMetaChange);
+                metaPickerInput.addEventListener("input", handleMetaChange);
+            }
+        }
+    }
+    if (metaColorPicker) {
+        const metaInputValue = document.getElementById("color-picker-meta").value;
+        if (metaInputValue && metaInputValue !== '') {
+            metaColorPicker.color = new ColorPicker.Color(metaInputValue);
+            metaColorPicker.update();
+        }
+    }
+    if (fixedColorPicker) {
+        const fixedInputValue = document.getElementById("color-picker-fixed").value;
+        if (fixedInputValue && fixedInputValue !== '') {
+            fixedColorPicker.color = new ColorPicker.Color(fixedInputValue);
+            fixedColorPicker.update();
+        }
+    }
 
     const codeGenBody = document.getElementById("code-gen-body");
     const h1Element = document.getElementById("site-title");
@@ -231,25 +790,52 @@ document.addEventListener('DOMContentLoaded', function() {
     const footerElement = document.querySelector("footer");
 
     function updateURLParams() {
-        const bodyColorHex = document.getElementById("color-picker-body").value ? document.getElementById("color-picker-body").value.substring(1) : '';
-        const metaColorHex = document.getElementById("color-picker-meta").value ? document.getElementById("color-picker-meta").value.substring(1) : '';
-        const menuColorHex = document.getElementById("color-picker-menu").value ? document.getElementById("color-picker-menu").value.substring(1) : '';
+        const bodyPickerValue = document.getElementById("color-picker-body").value;
+        const bodyColorHex = (bodyPickerValue && bodyPickerValue !== 'inherit') ? bodyPickerValue.substring(1) : '';
+        const bodyChecked = bodyCheckbox ? (bodyCheckbox.checked ? '1' : '0') : '1';
 
-        const newUrl = new URL(window.location.origin + window.location.pathname);
-        if (bodyColorHex) {
-            newUrl.searchParams.set('body', bodyColorHex);
-        }
-        if (metaColorHex) {
-            newUrl.searchParams.set('meta', metaColorHex);
-        }
-        if (menuColorHex) {
-            newUrl.searchParams.set('menu', menuColorHex);
-        }
-        history.replaceState(null, '', newUrl.toString());
+        const metaPickerValue = document.getElementById("color-picker-meta").value;
+        const metaColorHex = (metaPickerValue && metaPickerValue !== 'inherit') ? metaPickerValue.substring(1) : '';
+        const metaChecked = metaCheckbox ? (metaCheckbox.checked ? '1' : '0') : '0';
+
+        const fixedPickerValue = document.getElementById("color-picker-fixed").value;
+        const fixedColorHex = (fixedPickerValue && fixedPickerValue !== 'inherit') ? fixedPickerValue.substring(1) : '';
+        const fixedChecked = fixedCheckbox ? (fixedCheckbox.checked ? '1' : '0') : '0';
+
+        // Manually construct URL with literal commas (not encoded)
+        const queryString = `?body=${bodyChecked},${bodyColorHex}&fixed=${fixedChecked},${fixedColorHex}&meta=${metaChecked},${metaColorHex}`;
+        const newUrl = window.location.origin + window.location.pathname + queryString;
+        history.replaceState(null, '', newUrl);
     }
 
             function updateBodyColors(hexColor) {
-                const hex = hexColor.toUpperCase();
+                // Allow blank/empty values
+                if (!hexColor || hexColor.trim() === '') {
+                    document.body.style.backgroundColor = '';
+                    if (codeGenBody) {
+                        codeGenBody.textContent = `<body style=""></body>`;
+                        delete codeGenBody.dataset.highlighted;
+                        hljs.highlightElement(codeGenBody);
+                    }
+
+                    // Apply theme based on white background (#FFFFFF)
+                    const useDarkThemeWithLightText = selectThemeWithLuma('#FFFFFF');
+                    document.body.classList.toggle('dark-theme', useDarkThemeWithLightText);
+                    document.body.classList.toggle('light-theme', !useDarkThemeWithLightText);
+
+                    if (highlightJsLightTheme && highlightJsDarkTheme) {
+                        if (useDarkThemeWithLightText) {
+                            highlightJsLightTheme.disabled = true;
+                            highlightJsDarkTheme.disabled = false;
+                        } else {
+                            highlightJsLightTheme.disabled = false;
+                            highlightJsDarkTheme.disabled = true;
+                        }
+                    }
+                    return;
+                }
+
+                const hex = normalizeColor(hexColor);
 
                 document.body.style.backgroundColor = hex;
                 if (codeGenBody) {
@@ -274,7 +860,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     highlightJsDarkTheme.disabled = true;
                 }
             }
-            // updateURLParams();
+            updateURLParams();
             }
 
     const metaThemeColor = document.querySelector("meta[name=theme-color]");
@@ -283,7 +869,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const allCardContainers = document.querySelectorAll(".card-container");
 
                     function updateMetaColors(hexColor) {
-                        const hex = hexColor.toUpperCase();
+                        // Allow blank/empty values
+                        if (!hexColor || hexColor.trim() === '') {
+                            metaThemeColor.content = '';
+                            if (codeGenMeta) {
+                                codeGenMeta.textContent = `<head>\n  <meta name="theme-color" content="">\n</head>`;
+                                delete codeGenMeta.dataset.highlighted;
+                                hljs.highlightElement(codeGenMeta);
+                            }
+                            return;
+                        }
+
+                        const hex = normalizeColor(hexColor);
 
                         metaThemeColor.content = hex;
 
@@ -293,212 +890,224 @@ document.addEventListener('DOMContentLoaded', function() {
                             hljs.highlightElement(codeGenMeta);
                         }
 
-                                // updateURLParams();
+                                updateURLParams();
 
                     }
 
-    const menuTopElement = document.getElementById("menu-top");
-    const menuBottomElement = document.getElementById("menu-bottom");
-    const codeGenMenu = document.getElementById("code-gen-menu");
+    const fixedTopElement = document.getElementById("fixed-top");
+    const fixedBottomElement = document.getElementById("fixed-bottom");
+    const codeGenFixed = document.getElementById("code-gen-fixed");
 
-    function updateMenuColors(hexColor) {
-        const hex = hexColor.toUpperCase();
+    function updateFixedColors(hexColor) {
+        // Allow blank/empty values
+        if (!hexColor || hexColor.trim() === '') {
+            if (fixedTopElement) {
+                fixedTopElement.style.backgroundColor = '';
+            }
 
-        if (menuTopElement) {
-            menuTopElement.style.backgroundColor = hex;
+            if (fixedBottomElement) {
+                fixedBottomElement.style.backgroundColor = '';
+            }
+
+            if (codeGenFixed) {
+                codeGenFixed.textContent = `<div id="fixed-top" style=""></div>`;
+                delete codeGenFixed.dataset.highlighted;
+                hljs.highlightElement(codeGenFixed);
+            }
+            return;
         }
 
-        if (menuBottomElement) {
-            menuBottomElement.style.backgroundColor = hex;
+        const hex = normalizeColor(hexColor);
+
+        if (fixedTopElement) {
+            fixedTopElement.style.backgroundColor = hex;
         }
 
-        if (codeGenMenu) {
-            codeGenMenu.textContent = `<div id="menu-top" style="background-color: ${hex};"></div>`;
-            delete codeGenMenu.dataset.highlighted;
-            hljs.highlightElement(codeGenMenu);
+        if (fixedBottomElement) {
+            fixedBottomElement.style.backgroundColor = hex;
         }
 
-        // updateURLParams();
+        if (codeGenFixed) {
+            codeGenFixed.textContent = `<div id="fixed-top" style="background-color: ${hex};"></div>`;
+            delete codeGenFixed.dataset.highlighted;
+            hljs.highlightElement(codeGenFixed);
+        }
+
+        updateURLParams();
     }
 
     function setInitialColorsFromURL() {
         const urlParams = new URLSearchParams(window.location.search);
         let bodyColorParam = urlParams.get('body');
         let metaColorParam = urlParams.get('meta');
-        let menuColorParam = urlParams.get('menu');
+        let fixedColorParam = urlParams.get('fixed');
 
-        const formatColor = (colorStr) => {
-            if (!colorStr || colorStr.trim() === '' || colorStr.toLowerCase() === 'false') return null;
-            if (colorStr.match(/^[0-9a-fA-F]{3,6}$/)) {
-                return `#${colorStr.toUpperCase()}`;
-            } else if (colorStr.match(/^\d{1,3},\s*\d{1,3},\s*\d{1,3}$/)) {
-                return `rgb(${colorStr})`;
+        // Parse checkbox state and color from format "1,COLOR" or "0,COLOR"
+        const parseParam = (paramStr) => {
+            if (!paramStr || paramStr.trim() === '') return { checked: false, color: 'inherit' };
+
+            const parts = paramStr.split(',');
+            if (parts.length === 2) {
+                const checked = parts[0] === '1';
+                const colorValue = parts[1].trim();
+                if (!colorValue || colorValue === '') return { checked, color: 'inherit' };
+                if (colorValue.match(/^[0-9a-fA-F]{3,6}$/)) {
+                    return { checked, color: `#${colorValue.toUpperCase()}` };
+                }
+                return { checked, color: colorValue.toUpperCase() };
             }
-            return colorStr.toUpperCase();
+
+            // Fallback for old format without checkbox state
+            if (paramStr.toLowerCase() === 'false' || paramStr.toLowerCase() === 'none') return { checked: false, color: 'inherit' };
+            if (paramStr.match(/^[0-9a-fA-F]{3,6}$/)) {
+                return { checked: true, color: `#${paramStr.toUpperCase()}` };
+            } else if (paramStr.match(/^\d{1,3},\s*\d{1,3},\s*\d{1,3}$/)) {
+                return { checked: true, color: `rgb(${paramStr})` };
+            }
+            return { checked: true, color: paramStr.toUpperCase() };
         };
 
-        let initialBodyColor = formatColor(bodyColorParam);
-        let initialMetaColor = formatColor(metaColorParam);
-        let initialMenuColor = formatColor(menuColorParam);
+        const bodyParam = parseParam(bodyColorParam);
+        const metaParam = parseParam(metaColorParam);
+        const fixedParam = parseParam(fixedColorParam);
 
         // Check if parameters are explicitly in the URL (not just null/missing)
         const bodyParamExists = urlParams.has('body');
         const metaParamExists = urlParams.has('meta');
-        const menuParamExists = urlParams.has('menu');
+        const fixedParamExists = urlParams.has('fixed');
 
-        // Count how many parameters are set to actual color values (not null, not false)
-        const paramsSet = [initialBodyColor, initialMetaColor, initialMenuColor].filter(c => c !== null).length;
+        // Count how many parameters are set to actual color values (not inherit, not false)
+        const paramsSet = [bodyParam.color, metaParam.color, fixedParam.color].filter(c => c !== 'inherit').length;
 
         // Count how many parameters are explicitly present in URL (even if =false)
-        const paramsInURL = [bodyParamExists, metaParamExists, menuParamExists].filter(p => p === true).length;
+        const paramsInURL = [bodyParamExists, metaParamExists, fixedParamExists].filter(p => p === true).length;
 
         // Triadic color logic: if only one color is set AND other params are NOT in the URL
-        // (i.e., ?body=0044FF should trigger triadic, but ?body=0044FF&meta=false&menu=false should NOT)
+        // (i.e., ?body=1,0044FF should trigger complement, but ?body=1,0044FF&meta=0,&fixed=0, should NOT)
+        // Fixed uses -120° (counterclockwise), Meta uses +120° (clockwise) from Body
         if (paramsSet === 1 && paramsInURL === 1) {
-            let baseColor;
-            if (initialBodyColor) {
-                baseColor = initialBodyColor;
-                const triadicColors = getTriadicColors(baseColor);
-                initialMetaColor = triadicColors[1];
-                initialMenuColor = triadicColors[2];
-            } else if (initialMetaColor) {
-                baseColor = initialMetaColor;
-                const triadicColors = getTriadicColors(baseColor);
-                initialBodyColor = triadicColors[1];
-                initialMenuColor = triadicColors[2];
-            } else if (initialMenuColor) {
-                baseColor = initialMenuColor;
-                const triadicColors = getTriadicColors(baseColor);
-                initialBodyColor = triadicColors[1];
-                initialMetaColor = triadicColors[2];
+            if (bodyParam.color && bodyParam.color !== 'inherit') {
+                // Body is set: Fixed = Body-120°, Meta = Body+120°
+                const bodyColor = new ColorPicker.Color(bodyParam.color);
+                fixedParam.color = bodyColor.clone().spin(180).toString();
+                fixedParam.checked = true;
+                metaParam.color = bodyColor.clone().spin(180).toString();
+                metaParam.checked = true;
+            } else if (fixedParam.color && fixedParam.color !== 'inherit') {
+                // Fixed is set: Body = Fixed+120°, Meta = Fixed+240° (or Fixed-120°)
+                const fixedColor = new ColorPicker.Color(fixedParam.color);
+                bodyParam.color = fixedColor.clone().spin(180).toString();
+                bodyParam.checked = true;
+                metaParam.color = fixedColor.clone().spin(180).toString();
+                metaParam.checked = true;
+            } else if (metaParam.color && metaParam.color !== 'inherit') {
+                // Meta is set: Body = Meta-120°, Fixed = Meta-240° (or Meta+120°)
+                const metaColor = new ColorPicker.Color(metaParam.color);
+                bodyParam.color = metaColor.clone().spin(180).toString();
+                bodyParam.checked = true;
+                fixedParam.color = metaColor.clone().spin(180).toString();
+                fixedParam.checked = true;
             }
         }
 
-        if (initialBodyColor) {
+        if (bodyParamExists) {
+            // URL param exists
             try {
-                document.getElementById("color-picker-body").value = initialBodyColor;
+                document.getElementById("color-picker-body").value = bodyParam.color !== 'inherit' ? bodyParam.color : "inherit";
+                if (bodyCheckbox) bodyCheckbox.checked = bodyParam.checked;
             } catch (e) {
                 console.error("Failed to set body color from URL:", e);
             }
-        } else if (bodyColorParam && bodyColorParam.toLowerCase() === 'false') {
-            // Explicitly set to false - clear the input and set picker to gray
-            try {
-                document.getElementById("color-picker-body").value = "#808080";
-            } catch (e) {
-                console.error("Failed to set body color picker to gray:", e);
-            }
         } else {
-            // Set default body color to match input default
+            // No param in URL - set default body color
             try {
                 document.getElementById("color-picker-body").value = "#0088FF";
+                if (bodyCheckbox) bodyCheckbox.checked = true;
             } catch (e) {
                 console.error("Failed to set default body color:", e);
             }
         }
 
-        if (initialMetaColor) {
+        if (metaParamExists) {
+            // URL param exists
             try {
-                document.getElementById("color-picker-meta").value = initialMetaColor;
+                document.getElementById("color-picker-meta").value = metaParam.color !== 'inherit' ? metaParam.color : "inherit";
+                if (metaCheckbox) metaCheckbox.checked = metaParam.checked;
             } catch (e) {
                 console.error("Failed to set meta color from URL:", e);
             }
-        } else if (metaColorParam && metaColorParam.toLowerCase() === 'false') {
-            // Explicitly set to false - clear the input and set picker to gray
-            try {
-                document.getElementById("color-picker-meta").value = "#808080";
-            } catch (e) {
-                console.error("Failed to set meta color picker to gray:", e);
-            }
         } else {
-            // No meta param in URL - set picker to gray but don't set input
+            // No meta param in URL - use default color and uncheck checkbox
             try {
-                document.getElementById("color-picker-meta").value = "#808080";
+                document.getElementById("color-picker-meta").value = "#363636";
+                if (metaCheckbox) metaCheckbox.checked = false;
             } catch (e) {
-                console.error("Failed to set meta color picker to gray:", e);
+                console.error("Failed to set default meta color:", e);
             }
         }
 
-        if (initialMenuColor) {
+        if (fixedParamExists) {
+            // URL param exists
             try {
-                document.getElementById("color-picker-menu").value = initialMenuColor;
+                document.getElementById("color-picker-fixed").value = fixedParam.color !== 'inherit' ? fixedParam.color : "inherit";
+                if (fixedCheckbox) fixedCheckbox.checked = fixedParam.checked;
             } catch (e) {
-                console.error("Failed to set menu color from URL:", e);
+                console.error("Failed to set fixed color from URL:", e);
             }
-        } else if (menuColorParam && menuColorParam.toLowerCase() === 'false') {
-            // Explicitly set to false - clear the input and set picker to gray
+        } else {
+            // No fixed param in URL - set default value but leave unchecked
             try {
-                document.getElementById("color-picker-menu").value = "#808080";
+                document.getElementById("color-picker-fixed").value = "#FF7700";
+                if (fixedCheckbox) fixedCheckbox.checked = false;
             } catch (e) {
-                console.error("Failed to set menu color picker to gray:", e);
-            }
-        } else if (!menuParamExists) {
-            // No menu param in URL - set default
-            try {
-                document.getElementById("color-picker-menu").value = "#FF8800";
-            } catch (e) {
-                console.error("Failed to set default menu color:", e);
+                console.error("Failed to set default fixed color:", e);
             }
         }
     }
 
-    setInitialColorsFromURL();
     // Ensure inputs are updated after URL params are processed and color pickers are initialized
-    const urlParams = new URLSearchParams(window.location.search);
+    // Note: setInitialColorsFromURL() is now called earlier, before initializeColorPickers()
 
-    // Apply body color: URL param supersedes default
-    const bodyParam = urlParams.get('body');
-    if (urlParams.has('body')) {
-        // URL param exists - it supersedes default
-        if (bodyParam && bodyParam.trim() !== '' && bodyParam.toLowerCase() !== 'false') {
-            // Has a color value
-            updateBodyColors(document.getElementById("color-picker-body").value);
-        } else {
-            // =false or empty - leave blank/unset, but apply theme as if white
-            document.body.style.backgroundColor = '';
-            if (codeGenBody) {
-                codeGenBody.textContent = `<body style=""></body>`;
-                delete codeGenBody.dataset.highlighted;
-                hljs.highlightElement(codeGenBody);
-            }
-
-            // Apply theme based on white background
-            const useDarkThemeWithLightText = selectThemeWithLuma('#FFFFFF');
-            document.body.classList.toggle('dark-theme', useDarkThemeWithLightText);
-            document.body.classList.toggle('light-theme', !useDarkThemeWithLightText);
-
-            if (highlightJsLightTheme && highlightJsDarkTheme) {
-                if (useDarkThemeWithLightText) {
-                    highlightJsLightTheme.disabled = true;
-                    highlightJsDarkTheme.disabled = false;
-                } else {
-                    highlightJsLightTheme.disabled = false;
-                    highlightJsDarkTheme.disabled = true;
-                }
-            }
+    // Apply colors based on checkbox state
+    // Body color - apply only if checkbox is checked
+    if (bodyCheckbox && bodyCheckbox.checked) {
+        const bodyValue = document.getElementById("color-picker-body").value;
+        if (bodyValue && bodyValue !== 'inherit') {
+            updateBodyColors(bodyValue);
         }
     } else {
-        // No param in URL - use default #0044FF
-        updateBodyColors(document.getElementById("color-picker-body").value);
+        // Checkbox unchecked - leave blank/unset, but apply theme as if white
+        document.body.style.backgroundColor = '';
+        if (codeGenBody) {
+            codeGenBody.textContent = `<body style=""></body>`;
+            delete codeGenBody.dataset.highlighted;
+            hljs.highlightElement(codeGenBody);
+        }
+
+        // Apply theme based on white background
+        const useDarkThemeWithLightText = selectThemeWithLuma('#FFFFFF');
+        document.body.classList.toggle('dark-theme', useDarkThemeWithLightText);
+        document.body.classList.toggle('light-theme', !useDarkThemeWithLightText);
+
+        if (highlightJsLightTheme && highlightJsDarkTheme) {
+            if (useDarkThemeWithLightText) {
+                highlightJsLightTheme.disabled = true;
+                highlightJsDarkTheme.disabled = false;
+            } else {
+                highlightJsLightTheme.disabled = false;
+                highlightJsDarkTheme.disabled = true;
+            }
+        }
     }
 
-    // Apply meta color: URL param supersedes default (which is unset)
-    const metaParam = urlParams.get('meta');
-    if (urlParams.has('meta')) {
-        // URL param exists - it supersedes default
-        if (metaParam && metaParam.trim() !== '' && metaParam.toLowerCase() !== 'false') {
-            // Has a color value
-            updateMetaColors(document.getElementById("color-picker-meta").value);
-        } else {
-            // =false or empty - leave blank/unset
-            metaThemeColor.content = '';
-            if (codeGenMeta) {
-                codeGenMeta.textContent = `<head>\n  <meta name="theme-color" content="">\n</head>`;
-                delete codeGenMeta.dataset.highlighted;
-                hljs.highlightElement(codeGenMeta);
-            }
+    // Meta color - apply only if checkbox is checked
+    if (metaCheckbox && metaCheckbox.checked) {
+        const metaValue = document.getElementById("color-picker-meta").value;
+        if (metaValue && metaValue !== 'inherit') {
+            updateMetaColors(metaValue);
         }
     } else {
-        // No param in URL - default is unset
+        // Checkbox unchecked - leave blank/unset
         metaThemeColor.content = '';
         if (codeGenMeta) {
             codeGenMeta.textContent = `<head>\n  <meta name="theme-color" content="">\n</head>`;
@@ -507,74 +1116,60 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Apply menu color: URL param supersedes default
-    const menuParam = urlParams.get('menu');
-    if (urlParams.has('menu')) {
-        // URL param exists - it supersedes default
-        if (menuParam && menuParam.trim() !== '' && menuParam.toLowerCase() !== 'false') {
-            // Has a color value
-            updateMenuColors(document.getElementById("color-picker-menu").value);
-        } else {
-            // =false or empty - leave blank/unset
-            if (menuTopElement) menuTopElement.style.backgroundColor = '';
-            if (menuBottomElement) menuBottomElement.style.backgroundColor = '';
-            if (codeGenMenu) {
-                codeGenMenu.textContent = `<div id="menu-top" style=""></div>`;
-                delete codeGenMenu.dataset.highlighted;
-                hljs.highlightElement(codeGenMenu);
-            }
+    // Fixed color - apply only if checkbox is checked
+    if (fixedCheckbox && fixedCheckbox.checked) {
+        const fixedValue = document.getElementById("color-picker-fixed").value;
+        if (fixedValue && fixedValue !== 'inherit') {
+            updateFixedColors(fixedValue);
         }
     } else {
-        // No param in URL - use default
-        updateMenuColors(document.getElementById("color-picker-menu").value);
+        // Checkbox unchecked - leave blank/unset
+        if (fixedTopElement) fixedTopElement.style.backgroundColor = '';
+        if (fixedBottomElement) fixedBottomElement.style.backgroundColor = '';
+        if (codeGenFixed) {
+            codeGenFixed.textContent = `<div id="fixed-top" style=""></div>`;
+            delete codeGenFixed.dataset.highlighted;
+            hljs.highlightElement(codeGenFixed);
+        }
     }
 
     // Initialize highlight.js after initial colors are set
     hljs.highlightAll();
 
-    // Apply highlight.js to menu code block if it has content
-    if (codeGenMenu && codeGenMenu.textContent.trim() !== '') {
-        delete codeGenMenu.dataset.highlighted;
-        hljs.highlightElement(codeGenMenu);
+    // Apply highlight.js to fixed code block if it has content
+    if (codeGenFixed && codeGenFixed.textContent.trim() !== '') {
+        delete codeGenFixed.dataset.highlighted;
+        hljs.highlightElement(codeGenFixed);
     }
 
     // Share Button Logic
     const shareButton = document.getElementById("shareButton");
     if (shareButton) {
         shareButton.addEventListener("click", () => {
-            // Get hex values safely - only if input has a value
-            let bodyColorHex = '';
-            let metaColorHex = '';
-            let menuColorHex = '';
-
+            // Get hex values and checkbox states
             const bodyPickerValue = document.getElementById("color-picker-body").value;
-            if (bodyPickerValue) {
-                bodyColorHex = bodyPickerValue.substring(1).toUpperCase();
-            }
+            const bodyColorHex = (bodyPickerValue && bodyPickerValue !== 'inherit') ? bodyPickerValue.substring(1).toUpperCase() : '';
+            const bodyChecked = bodyCheckbox ? (bodyCheckbox.checked ? '1' : '0') : '1';
 
             const metaPickerValue = document.getElementById("color-picker-meta").value;
-            if (metaPickerValue) {
-                metaColorHex = metaPickerValue.substring(1).toUpperCase();
-            }
+            const metaColorHex = (metaPickerValue && metaPickerValue !== 'inherit') ? metaPickerValue.substring(1).toUpperCase() : '';
+            const metaChecked = metaCheckbox ? (metaCheckbox.checked ? '1' : '0') : '0';
 
-            const menuPickerValue = document.getElementById("color-picker-menu").value;
-            if (menuPickerValue) {
-                menuColorHex = menuPickerValue.substring(1).toUpperCase();
-            }
+            const fixedPickerValue = document.getElementById("color-picker-fixed").value;
+            const fixedColorHex = (fixedPickerValue && fixedPickerValue !== 'inherit') ? fixedPickerValue.substring(1).toUpperCase() : '';
+            const fixedChecked = fixedCheckbox ? (fixedCheckbox.checked ? '1' : '0') : '0';
 
-            const shareUrl = new URL(window.location.origin + window.location.pathname);
-            // Set parameters in order: body, menu, meta
-            shareUrl.searchParams.set('body', bodyColorHex || 'false');
-            shareUrl.searchParams.set('menu', menuColorHex || 'false');
-            shareUrl.searchParams.set('meta', metaColorHex || 'false');
+            // Manually construct URL with literal commas (not encoded)
+            const queryString = `?body=${bodyChecked},${bodyColorHex}&fixed=${fixedChecked},${fixedColorHex}&meta=${metaChecked},${metaColorHex}`;
+            const shareUrl = window.location.origin + window.location.pathname + queryString;
 
             console.log('Share button clicked');
             console.log('navigator.share available:', !!navigator.share);
-            console.log('Share URL:', shareUrl.toString());
+            console.log('Share URL:', shareUrl);
 
             // Check if Web Share API is available (requires secure context: https or localhost)
             if (navigator.share && window.isSecureContext) {
-                const shareData = { url: shareUrl.toString() };
+                const shareData = { url: shareUrl };
 
                 navigator.share(shareData)
                     .then(() => {
@@ -584,13 +1179,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         console.log('Share error:', error.name, error.message);
                         // If share fails and it's not because user cancelled, use fallback
                         if (error.name !== 'AbortError') {
-                            copyToClipboardFallback(shareUrl.toString());
+                            copyToClipboardFallback(shareUrl);
                         }
                     });
             } else {
                 // No Web Share API or not secure context, use clipboard fallback
                 console.log('Web Share API not available, using clipboard fallback');
-                copyToClipboardFallback(shareUrl.toString());
+                copyToClipboardFallback(shareUrl);
             }
         });
     }
@@ -601,38 +1196,44 @@ document.addEventListener('DOMContentLoaded', function() {
         copyButton.addEventListener("click", async () => {
             console.log('bodyColorPicker value:', document.getElementById("color-picker-body").value);
             console.log('metaColorPicker value:', document.getElementById("color-picker-meta").value);
-            console.log('menuColorPicker value:', document.getElementById("color-picker-menu").value);
+            console.log('fixedColorPicker value:', document.getElementById("color-picker-fixed").value);
 
-            // Get color values from pickers
-            const bodyColorHex = document.getElementById("color-picker-body").value ? document.getElementById("color-picker-body").value.substring(1).toUpperCase() : '';
-            const metaColorHex = document.getElementById("color-picker-meta").value ? document.getElementById("color-picker-meta").value.substring(1).toUpperCase() : '';
-            const menuColorHex = document.getElementById("color-picker-menu").value ? document.getElementById("color-picker-menu").value.substring(1).toUpperCase() : '';
+            // Get hex values and checkbox states
+            const bodyPickerValue = document.getElementById("color-picker-body").value;
+            const bodyColorHex = (bodyPickerValue && bodyPickerValue !== 'inherit') ? bodyPickerValue.substring(1).toUpperCase() : '';
+            const bodyChecked = bodyCheckbox ? (bodyCheckbox.checked ? '1' : '0') : '1';
+
+            const metaPickerValue = document.getElementById("color-picker-meta").value;
+            const metaColorHex = (metaPickerValue && metaPickerValue !== 'inherit') ? metaPickerValue.substring(1).toUpperCase() : '';
+            const metaChecked = metaCheckbox ? (metaCheckbox.checked ? '1' : '0') : '0';
+
+            const fixedPickerValue = document.getElementById("color-picker-fixed").value;
+            const fixedColorHex = (fixedPickerValue && fixedPickerValue !== 'inherit') ? fixedPickerValue.substring(1).toUpperCase() : '';
+            const fixedChecked = fixedCheckbox ? (fixedCheckbox.checked ? '1' : '0') : '0';
 
             console.log('Copy Button Clicked:');
-            console.log('bodyColorHex:', bodyColorHex);
-            console.log('metaColorHex:', metaColorHex);
-            console.log('menuColorHex:', menuColorHex);
+            console.log('bodyColorHex:', bodyColorHex, 'bodyChecked:', bodyChecked);
+            console.log('metaColorHex:', metaColorHex, 'metaChecked:', metaChecked);
+            console.log('fixedColorHex:', fixedColorHex, 'fixedChecked:', fixedChecked);
 
-            const copyUrl = new URL(window.location.origin + window.location.pathname);
-            // Set parameters in order: body, menu, meta
-            copyUrl.searchParams.set('body', bodyColorHex || 'false');
-            copyUrl.searchParams.set('menu', menuColorHex || 'false');
-            copyUrl.searchParams.set('meta', metaColorHex || 'false');
-            console.log('Copy URL:', copyUrl.toString());
+            // Manually construct URL with literal commas (not encoded)
+            const queryString = `?body=${bodyChecked},${bodyColorHex}&fixed=${fixedChecked},${fixedColorHex}&meta=${metaChecked},${metaColorHex}`;
+            const copyUrl = window.location.origin + window.location.pathname + queryString;
+            console.log('Copy URL:', copyUrl);
 
             // Try modern Clipboard API first, fallback to legacy method
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 try {
-                    await navigator.clipboard.writeText(copyUrl.toString());
-                    console.log('URL copied to clipboard:', copyUrl.toString());
+                    await navigator.clipboard.writeText(copyUrl);
+                    console.log('URL copied to clipboard:', copyUrl);
                 } catch (error) {
                     console.error('Clipboard API failed:', error);
                     // Fallback to legacy method
-                    copyToClipboardFallback(copyUrl.toString());
+                    copyToClipboardFallback(copyUrl);
                 }
             } else {
                 // Fallback for non-secure contexts (http://)
-                copyToClipboardFallback(copyUrl.toString());
+                copyToClipboardFallback(copyUrl);
             }
         });
     }

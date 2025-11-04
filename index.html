@@ -24,13 +24,15 @@
 </head>
 
 <body style="background-color: #0088FF;">
-    <div id="menu-top"></div>
-    <div id="menu-bottom"></div>
+    <div id="fixed-top"></div>
+    <div id="fixed-bottom"></div>
 
-<h1 id="site-title">Safari Demo: Color in Tab Bar</h1>
+<h1><a href="/">Safari Demo: Color in Tab Bar</a></h1>
+
+    <h3 id="not-safari-notice">Safari 15.0 or above required</h3>
 
     <h2>macOS: Safari › Setting › Tabs › Appearance: ✓ Show color in tab bar</h2>
-    <h3 id="not-safari-notice">Safari 15.0 or above required</h3>
+    <h2>iOS: Setting › Apps › Safari › Tabs: ✓ Top</h2>
 
     <div class="button-container">
         <button id="shareButton" class="action-button">Share</button>
@@ -41,22 +43,31 @@
 <!-- first card-container for body background -->
     <div class="card-container">
         <h4 class="code-gen-title">Body Background Color</h4>
-        <div class="color-picker">
-            <input type="text" id="color-picker-body" class="color-preview" value="#0088FF" autocomplete="off" spellcheck="false" data-function="color-picker" data-format="hex">
+        <div class="color-picker-wrapper">
+            <input type="checkbox" id="checkbox-body" class="color-checkbox" checked>
+            <div class="color-picker">
+                <input type="text" id="color-picker-body" class="color-preview btn-appearance" value="#0088FF" autocomplete="off" spellcheck="false" data-format="hex" data-color-keywords="red,orange,yellow,lime,green,blue,indigo,violet,pink,white,black">
+            </div>
         </div>
     </div>
-<!-- second card-container for menu background -->
+<!-- second card-container for fixed position background -->
     <div class="card-container">
-        <h4 class="code-gen-title">Menu Background Color</h4>
-        <div class="color-picker">
-            <input type="text" id="color-picker-menu" class="color-preview" value="#FF8800" autocomplete="off" spellcheck="false" data-function="color-picker" data-format="hex">
+        <h4 class="code-gen-title">Fixed Position Background Color</h4>
+        <div class="color-picker-wrapper">
+            <input type="checkbox" id="checkbox-fixed" class="color-checkbox">
+            <div class="color-picker">
+                <input type="text" id="color-picker-fixed" class="color-preview btn-appearance" value="#FF7700" autocomplete="off" spellcheck="false" data-format="hex" data-color-keywords="red,orange,yellow,lime,green,blue,indigo,violet,pink,white,black">
+            </div>
         </div>
     </div>
 <!-- third card-container for meta theme -->
     <div class="card-container">
         <h4 class="code-gen-title">Meta Theme Color</h4>
-        <div class="color-picker">
-            <input type="text" id="color-picker-meta" class="color-preview" value="#808080" autocomplete="off" spellcheck="false" data-function="color-picker" data-format="hex">
+        <div class="color-picker-wrapper">
+            <input type="checkbox" id="checkbox-meta" class="color-checkbox">
+            <div class="color-picker">
+                <input type="text" id="color-picker-meta" class="color-preview btn-appearance" value="#363636" autocomplete="off" spellcheck="false" data-format="hex" data-color-keywords="red,orange,yellow,lime,green,blue,indigo,violet,pink,white,black">
+            </div>
         </div>
     </div>
 </div>
@@ -65,15 +76,15 @@
     <div class="card-container">
         <h4 class="code-gen-title">Generated Code</h4>
         <code id="code-gen-body" class="language-html code-gen"></code>
+        <code id="code-gen-fixed" class="language-html code-gen"></code>
         <code id="code-gen-meta" class="language-html code-gen"></code>
-        <code id="code-gen-menu" class="language-html code-gen"></code>
     </div>
 
 <script src="luma.js"></script>
 <script src="script.js"></script>
 
 <footer>
-    <p>&copy; 2025 <a href="https://github.com/andesco">Andrew Escobar</a></p>
+    <p><a href="https://github.com/andesco/Safari-color-in-tab-bar">github.com/andesco/safari-color-in-tab-bar</a><br /><br />&copy; 2025 Andrew Escobar</p>
 </footer>
 
 </body>

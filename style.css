@@ -2,29 +2,28 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
     box-sizing: border-box;
     margin: 0;
-    padding-top: 2rem;
     text-align: center;
 }
 
-#menu-top {
+#fixed-top {
     position: fixed;
     top: 4px; /* <5px to supersede <body> on iOS and macOS*/
     left: 0;
     margin: 0;
     padding: 0;
     width: 89%; /* >79% to superced <body> on macOS; >88% to superced <body> on macOS; */
-    min-height: 3px; /* >2px for dynamic color on macOS */
+    min-height: 10px; /* >2px for dynamic color on macOS */
     z-index: 1000;
 }
 
-#menu-bottom {
+#fixed-bottom {
     position: fixed;
     bottom: 3px; /* <4px to supersede <body> on iOS*/
     left: 0;
     margin: 0;
     padding: 0;
     width: 89%; /* >88% to superced <body> on iOS*/
-    min-height: 3px; /* >2px for dynamic color iOS */
+    min-height: 10px; /* >2px for dynamic color iOS */
     z-index: 1000;
 }
 
@@ -40,11 +39,6 @@ body.light-theme {
     background-color: #0044ff;
 }
 
-#site-title {
-    text-align: center;
-    font-weight: 700;
-    font-size: 1.875rem;
-}
 
 .cards-flex-wrapper {
     display: flex;
@@ -70,6 +64,16 @@ body.light-theme {
     flex-shrink: 0;
 }
 
+/* Ensure all 3 cards fit on one line OR all stack vertically */
+/* 3 cards * 280px + 2 gaps * 1.25rem (20px) = 880px minimum to fit all 3 */
+/* 880px / 0.9 (90% width) = ~978px */
+@media screen and (max-width: 977px) {
+    .cards-flex-wrapper .card-container {
+        width: 100%;
+        max-width: 400px;
+    }
+}
+
 .card-container:not(.cards-flex-wrapper .card-container) {
     margin: 1.25rem auto;
     width: calc(840px + 2.5rem);
@@ -85,7 +89,7 @@ body.light-theme {
 
 .card-background,
 .card-theme,
-.card-menu {
+.card-fixed {
     box-shadow: rgba(0, 0, 0, 0.2) 0px 0px 10px -4px;
 }
 
@@ -176,6 +180,38 @@ input.code-gen {
     border: none;
 }
 
+.color-picker-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.color-checkbox {
+    width: 2.5rem;
+    height: 2.5rem;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.color-checkbox:hover {
+    opacity: 0.8;
+    transform: scale(1.05);
+}
+
+.xlight-theme .color-checkbox:not(:checked) {
+    filter: grayscale(1) invert(0) brightness(1) contrast(1);
+}
+
+.xdark-theme .color-checkbox:not(:checked) {
+    filter: grayscale(1) invert(1) brightness(1) contrast(10);
+}
+
+.dark-theme .color-checkbox:checked,
+.light-theme .color-checkbox:checked {
+    filter: grayscale(1) invert(1) brightness(1) contrast(10);
+}
+
 #not-safari-notice {
     margin: 0 auto 0.625rem auto;
     display: inline-block;
@@ -184,6 +220,18 @@ input.code-gen {
     font-weight: 600;
     padding: 0.3125rem 0.625rem;
     background-color: transparent;
+}
+
+h1 {
+    text-align: center;
+    font-weight: 700;
+    font-size: 1.875rem;
+    padding-top: 1.875rem;
+}
+
+h1 a {
+    text-decoration: none;
+    color: inherit;
 }
 
 h2 {
@@ -273,6 +321,16 @@ footer {
 footer a {
     text-decoration: none;
     color: inherit;
+}
+
+/* Color picker dropdown menu styling */
+.color-dropdown .color-option,
+.color-dropdown .menu {
+    font-size: 1.125rem !important;
+}
+
+.color-dropdown .menu > li {
+    font-size: 1.125rem !important;
 }
 
 @media screen and (max-width: 512px) {
