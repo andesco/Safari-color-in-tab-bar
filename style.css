@@ -11,8 +11,8 @@ body {
     left: 0;
     margin: 0;
     padding: 0;
-    width: 89%; /* >79% to superced <body> on macOS; >88% to superced <body> on macOS; */
-    min-height: 10px; /* >2px for dynamic color on macOS */
+    width: 90%; /* >79% to superced <body> on macOS; >88% to superced <body> on macOS; */
+    min-height: 15px; /* >2px for dynamic color on macOS */
     z-index: 1000;
 }
 
@@ -22,8 +22,8 @@ body {
     left: 0;
     margin: 0;
     padding: 0;
-    width: 89%; /* >88% to superced <body> on iOS*/
-    min-height: 10px; /* >2px for dynamic color iOS */
+    width: 90%; /* >88% to superced <body> on iOS*/
+    min-height: 15px; /* >2px for dynamic color iOS */
     z-index: 1000;
 }
 
@@ -81,8 +81,6 @@ body.light-theme {
 }
 
 .card-content {
-    -webkit-backdrop-filter: saturate(90%) blur(16px);
-    backdrop-filter: saturate(90%) blur(16px);
     padding: 1.25rem;
     border-radius: 8px;
 }
@@ -93,22 +91,9 @@ body.light-theme {
     box-shadow: rgba(0, 0, 0, 0.2) 0px 0px 10px -4px;
 }
 
-/* Checkered transparency pattern for unset colors */
-.card-container.not-set {
-    background-image:
-        linear-gradient(45deg, #ccc 25%, transparent 25%),
-        linear-gradient(-45deg, #ccc 25%, transparent 25%),
-        linear-gradient(45deg, transparent 75%, #ccc 75%),
-        linear-gradient(-45deg, transparent 75%, #ccc 75%);
-    background-size: 20px 20px;
-    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
-    background-color: #fff;
-}
-
 .card-container.not-set h4 {
     color: #000000 !important;
 }
-
 
 .code-gen {
     width: 90%;
@@ -194,22 +179,23 @@ input.code-gen {
     transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
-.color-checkbox:hover {
-    opacity: 0.8;
-    transform: scale(1.05);
-}
-
 .xlight-theme .color-checkbox:not(:checked) {
     filter: grayscale(1) invert(0) brightness(1) contrast(1);
 }
 
 .xdark-theme .color-checkbox:not(:checked) {
-    filter: grayscale(1) invert(1) brightness(1) contrast(10);
+    filter: grayscale(1) invert(1) brightness(1) contrast(1);
 }
 
 .dark-theme .color-checkbox:checked,
 .light-theme .color-checkbox:checked {
-    filter: grayscale(1) invert(1) brightness(1) contrast(10);
+    filter: grayscale(1) invert(1) brightness(2) contrast(1);
+}
+
+input.color-preview {
+    font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
+    font-weight: 500;
+    letter-spacing: 0.05em;
 }
 
 #not-safari-notice {
