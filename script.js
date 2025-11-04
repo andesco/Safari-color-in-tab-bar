@@ -63,12 +63,15 @@ const expandHex = (hex) => {
     return clean; // Already 6 digits or invalid
 };
 
-// Helper function to force uppercase hex in picker input after update
+// Helper function to force uppercase and 6-digit hex in picker input after update
 const uppercasePickerValue = (picker, inputElement) => {
     if (inputElement && inputElement.value) {
         const value = inputElement.value;
         if (value.startsWith('#')) {
-            inputElement.value = value.toUpperCase();
+            const hex = value.substring(1);
+            // Expand 3-digit to 6-digit if needed
+            const expanded = hex.length === 3 ? expandHex(hex) : hex;
+            inputElement.value = '#' + expanded.toUpperCase();
         }
     }
 };
