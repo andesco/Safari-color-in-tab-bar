@@ -330,26 +330,48 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Define fixed and meta change handlers at module scope so they can be reused
     const handleFixedChange = function(e) {
+        console.log('handleFixedChange called, value:', e.target.value, 'fixedColorPicker:', !!fixedColorPicker);
         isUpdatingFixed = true;
         const value = e.target.value;
-        // Allow empty values, "inherit", or "none" keyword
-        if (!value || value.trim() === '' || value.toLowerCase() === 'none' || value.toLowerCase() === 'inherit' || value === 'transparent') {
-            fixedLastValue = 'inherit';
-            e.target.value = 'inherit';
+        // Allow empty values - just clear and don't set to "inherit"
+        if (!value || value.trim() === '') {
+            fixedLastValue = '';
+            e.target.value = '';
             // Only update if checkbox is checked
             if (fixedCheckbox && fixedCheckbox.checked) {
                 updateFixedColors('');
-                // Reload page to force Safari to re-sample colors
-                window.location.reload();
             }
         } else {
             const normalized = normalizeColor(value);
+            console.log('Normalized color:', normalized);
             fixedLastValue = normalized;
-            // Only update if checkbox is checked
+
+            // Always update the color picker widget to show the new color first
+            if (fixedColorPicker) {
+                console.log('Attempting to update fixedColorPicker');
+                try {
+                    fixedColorPicker.color = new ColorPicker.Color(normalized);
+                    fixedColorPicker.update();
+                    console.log('Successfully updated fixedColorPicker');
+
+                    // Force the input value to uppercase after library update
+                    // The library converts to lowercase, so we need to wait longer
+                    setTimeout(() => {
+                        e.target.value = normalized;
+                    }, 200);
+                } catch (error) {
+                    console.error("Failed to update fixed color picker:", error);
+                }
+            } else {
+                console.error('fixedColorPicker is undefined!');
+            }
+
+            // Update URL params
+            updateURLParams();
+
+            // Only update actual colors if checkbox is checked
             if (fixedCheckbox && fixedCheckbox.checked) {
                 updateFixedColors(normalized);
-                // Reload page to force Safari to re-sample colors
-                window.location.reload();
             }
         }
         setTimeout(() => { isUpdatingFixed = false; }, 0);
@@ -358,10 +380,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const handleMetaChange = function(e) {
         isUpdatingMeta = true;
         const value = e.target.value;
-        // Allow empty values, "inherit", or "none" keyword
-        if (!value || value.trim() === '' || value.toLowerCase() === 'none' || value.toLowerCase() === 'inherit' || value === 'transparent') {
-            metaLastValue = 'inherit';
-            e.target.value = 'inherit';
+        // Allow empty values - just clear and don't set to "inherit"
+        if (!value || value.trim() === '') {
+            metaLastValue = '';
+            e.target.value = '';
             // Only update if checkbox is checked
             if (metaCheckbox && metaCheckbox.checked) {
                 updateMetaColors('');
@@ -369,7 +391,27 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             const normalized = normalizeColor(value);
             metaLastValue = normalized;
-            // Only update if checkbox is checked
+
+            // Always update the color picker widget to show the new color first
+            if (metaColorPicker) {
+                try {
+                    metaColorPicker.color = new ColorPicker.Color(normalized);
+                    metaColorPicker.update();
+
+                    // Force the input value to uppercase after library update
+                    // The library converts to lowercase, so we need to wait longer
+                    setTimeout(() => {
+                        e.target.value = normalized;
+                    }, 200);
+                } catch (error) {
+                    console.error("Failed to update meta color picker:", error);
+                }
+            }
+
+            // Update URL params
+            updateURLParams();
+
+            // Only update actual colors if checkbox is checked
             if (metaCheckbox && metaCheckbox.checked) {
                 updateMetaColors(normalized);
             }
@@ -433,30 +475,6 @@ document.addEventListener('DOMContentLoaded', function() {
             bodyPickerInput.setAttribute('data-format', 'hex');
         }
 
-        // Intercept the value setter to enforce format normalization
-        const bodyDescriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
-        const bodyOriginalSet = bodyDescriptor.set;
-        Object.defineProperty(bodyPickerInput, 'value', {
-            get: bodyDescriptor.get,
-            set: function(newValue) {
-                if (!isUpdatingBody) {
-                    const normalized = normalizeColor(String(newValue));
-                    bodyLastValue = normalized;
-
-                    // Update data-format attribute to match current format
-                    if (isRgbFormat(normalized)) {
-                        this.setAttribute('data-format', 'rgb');
-                    } else {
-                        this.setAttribute('data-format', 'hex');
-                    }
-
-                    bodyOriginalSet.call(this, normalized);
-                } else {
-                    bodyOriginalSet.call(this, newValue);
-                }
-            }
-        });
-
         bodyColorPicker = new ColorPicker(bodyPickerInput, {
             colorPresets: bootstrapColors,
             colorKeywords: `#0088FF:default,${initialBodyColorValue}:initial`
@@ -467,10 +485,10 @@ document.addEventListener('DOMContentLoaded', function() {
             isUpdatingBody = true;
             const value = e.target.value;
 
-            // Allow empty values, "inherit", or "none" keyword
-            if (!value || value.trim() === '' || value.toLowerCase() === 'none' || value.toLowerCase() === 'inherit' || value === 'transparent') {
-                bodyLastValue = 'inherit';
-                e.target.value = 'inherit';
+            // Allow empty values - just clear and don't set to "inherit"
+            if (!value || value.trim() === '') {
+                bodyLastValue = '';
+                e.target.value = '';
                 // Only update if checkbox is checked
                 if (bodyCheckbox && bodyCheckbox.checked) {
                     updateBodyColors('');
@@ -495,7 +513,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         fixedColorPicker.update();
                     }
                     fixedPickerInput.addEventListener("colorpicker.change", handleFixedChange);
-                    fixedPickerInput.addEventListener("input", handleFixedChange);
+                    fixedPickerInput.addEventListener("change", handleFixedChange);
                 }
 
                 if (metaColorPicker) {
@@ -518,7 +536,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         metaColorPicker.update();
                     }
                     metaPickerInput.addEventListener("colorpicker.change", handleMetaChange);
-                    metaPickerInput.addEventListener("input", handleMetaChange);
+                    metaPickerInput.addEventListener("change", handleMetaChange);
                 }
 
                 setTimeout(() => { isUpdatingBody = false; }, 0);
@@ -527,6 +545,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const normalized = normalizeColor(value);
             bodyLastValue = normalized;
+
+            // Update the color picker widget to show the new color first
+            if (bodyColorPicker) {
+                try {
+                    bodyColorPicker.color = new ColorPicker.Color(normalized);
+                    bodyColorPicker.update();
+
+                    // Force the input value to uppercase after library update
+                    // The library converts to lowercase, so we need to wait longer
+                    setTimeout(() => {
+                        e.target.value = normalized;
+                    }, 200);
+                } catch (error) {
+                    console.error("Failed to update body color picker:", error);
+                }
+            }
+
             // Only update if checkbox is checked
             if (bodyCheckbox && bodyCheckbox.checked) {
                 updateBodyColors(normalized);
@@ -554,7 +589,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // Re-attach event handlers
                 fixedPickerInput.addEventListener("colorpicker.change", handleFixedChange);
-                fixedPickerInput.addEventListener("input", handleFixedChange);
+                fixedPickerInput.addEventListener("change", handleFixedChange);
             }
 
             if (metaColorPicker) {
@@ -584,14 +619,32 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // Re-attach event handlers
                 metaPickerInput.addEventListener("colorpicker.change", handleMetaChange);
-                metaPickerInput.addEventListener("input", handleMetaChange);
+                metaPickerInput.addEventListener("change", handleMetaChange);
             }
 
             setTimeout(() => { isUpdatingBody = false; }, 0);
         };
 
+        // Only listen to colorpicker.change (when using the visual picker)
         bodyPickerInput.addEventListener("colorpicker.change", handleBodyChange);
-        bodyPickerInput.addEventListener("input", handleBodyChange);
+
+        // Use blur event to handle manual text input
+        // This fires when user clicks away or tabs out
+        bodyPickerInput.addEventListener("blur", function(e) {
+            const currentValue = e.target.value;
+
+            // If the value is "inherit", clear it - we don't want that
+            if (currentValue && currentValue.toLowerCase() === 'inherit') {
+                e.target.value = '';
+                return;
+            }
+
+            // Check for valid hex color only
+            if (currentValue && currentValue.match(/^#?[0-9a-fA-F]{3,8}$/)) {
+                // Trigger the change handler which will normalize and update everything
+                handleBodyChange(e);
+            }
+        });
 
         const metaPickerInput = document.getElementById("color-picker-meta");
         metaPickerInput.value = normalizeColor(metaPickerInput.value);
@@ -604,30 +657,6 @@ document.addEventListener('DOMContentLoaded', function() {
             metaPickerInput.setAttribute('data-format', 'hex');
         }
 
-        // Intercept the value setter to enforce format normalization
-        const metaDescriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
-        const metaOriginalSet = metaDescriptor.set;
-        Object.defineProperty(metaPickerInput, 'value', {
-            get: metaDescriptor.get,
-            set: function(newValue) {
-                if (!isUpdatingMeta) {
-                    const normalized = normalizeColor(String(newValue));
-                    metaLastValue = normalized;
-
-                    // Update data-format attribute to match current format
-                    if (isRgbFormat(normalized)) {
-                        this.setAttribute('data-format', 'rgb');
-                    } else {
-                        this.setAttribute('data-format', 'hex');
-                    }
-
-                    metaOriginalSet.call(this, normalized);
-                } else {
-                    metaOriginalSet.call(this, newValue);
-                }
-            }
-        });
-
         // META colorKeywords: default=#363636, initial=URL param or #363636, complement=120° from body
         const metaKeywords = `#363636:default,${initialMetaColorValue}:initial,#0088FF:complement`;
 
@@ -636,9 +665,26 @@ document.addEventListener('DOMContentLoaded', function() {
             colorKeywords: metaKeywords
         });
 
-        // handleMetaChange is already defined earlier
+        // Only listen to colorpicker.change (when using the visual picker)
         metaPickerInput.addEventListener("colorpicker.change", handleMetaChange);
-        metaPickerInput.addEventListener("input", handleMetaChange);
+
+        // Use blur event to handle manual text input
+        // This fires when user clicks away or tabs out
+        metaPickerInput.addEventListener("blur", function(e) {
+            const currentValue = e.target.value;
+
+            // If the value is "inherit", clear it - we don't want that
+            if (currentValue && currentValue.toLowerCase() === 'inherit') {
+                e.target.value = '';
+                return;
+            }
+
+            // Check for valid hex color only
+            if (currentValue && currentValue.match(/^#?[0-9a-fA-F]{3,8}$/)) {
+                // Trigger the change handler which will normalize and update everything
+                handleMetaChange(e);
+            }
+        });
 
         const fixedPickerInput = document.getElementById("color-picker-fixed");
         fixedPickerInput.value = normalizeColor(fixedPickerInput.value);
@@ -651,30 +697,6 @@ document.addEventListener('DOMContentLoaded', function() {
             fixedPickerInput.setAttribute('data-format', 'hex');
         }
 
-        // Intercept the value setter to enforce format normalization
-        const fixedDescriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
-        const fixedOriginalSet = fixedDescriptor.set;
-        Object.defineProperty(fixedPickerInput, 'value', {
-            get: fixedDescriptor.get,
-            set: function(newValue) {
-                if (!isUpdatingFixed) {
-                    const normalized = normalizeColor(String(newValue));
-                    fixedLastValue = normalized;
-
-                    // Update data-format attribute to match current format
-                    if (isRgbFormat(normalized)) {
-                        this.setAttribute('data-format', 'rgb');
-                    } else {
-                        this.setAttribute('data-format', 'hex');
-                    }
-
-                    fixedOriginalSet.call(this, normalized);
-                } else {
-                    fixedOriginalSet.call(this, newValue);
-                }
-            }
-        });
-
         // Note: Initial complement will be calculated after body color is synced from URL
         // For now, use a placeholder that will be updated
         fixedColorPicker = new ColorPicker(fixedPickerInput, {
@@ -682,9 +704,26 @@ document.addEventListener('DOMContentLoaded', function() {
             colorKeywords: `#FF7700:default,${initialFixedColorValue}:initial,#0088FF:complement`
         });
 
-        // handleFixedChange is already defined earlier
+        // Only listen to colorpicker.change (when using the visual picker)
         fixedPickerInput.addEventListener("colorpicker.change", handleFixedChange);
-        fixedPickerInput.addEventListener("input", handleFixedChange);
+
+        // Use blur event to handle manual text input
+        // This fires when user clicks away or tabs out
+        fixedPickerInput.addEventListener("blur", function(e) {
+            const currentValue = e.target.value;
+
+            // If the value is "inherit", clear it - we don't want that
+            if (currentValue && currentValue.toLowerCase() === 'inherit') {
+                e.target.value = '';
+                return;
+            }
+
+            // Check for valid hex color only
+            if (currentValue && currentValue.match(/^#?[0-9a-fA-F]{3,8}$/)) {
+                // Trigger the change handler which will normalize and update everything
+                handleFixedChange(e);
+            }
+        });
 
         // Add checkbox event listeners
         bodyCheckbox.addEventListener("change", function() {
