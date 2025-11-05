@@ -64,6 +64,20 @@ body.light-theme {
     flex-shrink: 0;
 }
 
+.card-container h4 {
+    text-align: left;
+    align-self: flex-start;
+    width: 100%;
+    padding-left: 0px;
+    padding-bottom: 0px;
+    padding-top: 0px;
+    margin-top: 1.25rem;
+    font-size: 1.125rem;
+    margin-bottom: 1em;
+    font-weight: normal;
+    border: none;
+}
+
 /* Ensure all 3 cards fit on one line OR all stack vertically */
 /* 3 cards * 280px + 2 gaps * 1.25rem (20px) = 880px minimum to fit all 3 */
 /* 880px / 0.9 (90% width) = ~978px */
@@ -72,12 +86,27 @@ body.light-theme {
         width: 100%;
         max-width: 400px;
     }
+
+    .card-container h4 {
+        text-align: center;
+        align-self: center;
+        width: auto;
+    }
 }
 
 .card-container:not(.cards-flex-wrapper .card-container) {
     margin: 1.25rem auto;
     width: calc(840px + 2.5rem);
     max-width: 90%;
+}
+
+.card-container.safari-settings {
+    align-items: flex-start;
+    text-align: left;
+}
+
+.card-container.safari-settings p {
+    font-size: 1.125rem;
 }
 
 .card-content {
@@ -96,13 +125,12 @@ body.light-theme {
 }
 
 .code-gen {
-    width: 90%;
-    max-width: 900px;
+    width: 100%;
+    max-width: 100%;
     resize: none;
     border-radius: 8px;
     font-size: 0.875rem;
-    font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberat
-ion Mono, monospace;
+    font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
 }
 
 .light-theme .code-gen {
@@ -125,6 +153,8 @@ code.code-gen {
     display: block;
     margin-bottom: 1.5rem;
     border-radius: 8px;
+    white-space: pre !important;
+    text-align: left;
 }
 
 
@@ -151,18 +181,6 @@ input.code-gen {
 .dark-theme input.code-gen {
     background-color: #333;
     color: #FFF;
-}
-
-.code-gen-title {
-    text-align: center;
-    padding-left: 0px;
-    padding-bottom: 0px;
-    padding-top: 0px;
-    margin-top: 1.25rem;
-    font-size: 1rem;
-    margin-bottom: 1em;
-    font-weight: bold;
-    border: none;
 }
 
 .color-picker-wrapper {

@@ -336,12 +336,10 @@ document.addEventListener('DOMContentLoaded', function() {
     let isUpdatingFixed = false;
 
     // DOM element references needed by update functions
-    const codeGenBody = document.getElementById("code-gen-body");
+    const codeGenExample = document.getElementById("code-gen-example");
     const metaThemeColor = document.querySelector("meta[name=theme-color]");
-    const codeGenMeta = document.getElementById("code-gen-meta");
     const fixedTopElement = document.getElementById("fixed-top");
     const fixedBottomElement = document.getElementById("fixed-bottom");
-    const codeGenFixed = document.getElementById("code-gen-fixed");
 
     // Define update functions that will be used by handlers
     const updateURLParams = () => {
@@ -367,22 +365,56 @@ document.addEventListener('DOMContentLoaded', function() {
         history.replaceState(null, '', newUrl);
     };
 
+    const updateGeneratedCode = () => {
+        // Get current values and checkbox states
+        const bodyPickerValue = document.getElementById("color-picker-body").value;
+        const bodyChecked = bodyCheckbox && bodyCheckbox.checked;
+        const bodyHex = bodyPickerValue && bodyPickerValue !== 'inherit' ? normalizeColor(bodyPickerValue) : null;
+
+        const metaPickerValue = document.getElementById("color-picker-meta").value;
+        const metaChecked = metaCheckbox && metaCheckbox.checked;
+        const metaHex = metaPickerValue && metaPickerValue !== 'inherit' ? normalizeColor(metaPickerValue) : null;
+
+        const fixedPickerValue = document.getElementById("color-picker-fixed").value;
+        const fixedChecked = fixedCheckbox && fixedCheckbox.checked;
+        const fixedHex = fixedPickerValue && fixedPickerValue !== 'inherit' ? normalizeColor(fixedPickerValue) : null;
+
+        // Build the consolidated HTML code example
+        let headContent = '';
+        if (metaHex && metaChecked) {
+            headContent = `    <meta name="theme-color" content="${metaHex}">`;
+        }
+
+        let bodyStyle = '';
+        if (bodyHex && bodyChecked) {
+            bodyStyle = `background-color: ${bodyHex};`;
+        }
+
+        let divStyle = 'position: fixed; top: 0;';
+        if (fixedHex && fixedChecked) {
+            divStyle += ` background-color: ${fixedHex};`;
+        }
+
+        const codeExample = `<head>
+${headContent ? headContent + '\n' : ''}</head>
+<body style="${bodyStyle}">
+    <div style="${divStyle}">
+    </div>
+</body>`;
+
+        // Update the code block
+        if (codeGenExample) {
+            codeGenExample.textContent = codeExample;
+            delete codeGenExample.dataset.highlighted;
+            hljs.highlightElement(codeGenExample);
+        }
+    };
+
     const updateBodyColors = (hexColor, applyStyle = true) => {
         // Get the current input value and checkbox state
         const inputValue = document.getElementById("color-picker-body").value;
         const isChecked = bodyCheckbox && bodyCheckbox.checked;
         const hex = inputValue && inputValue !== 'inherit' ? normalizeColor(inputValue) : null;
-
-        // Generate code based on checkbox state
-        if (codeGenBody) {
-            if (hex && isChecked) {
-                codeGenBody.textContent = `<body style="background-color: ${hex};"></body>`;
-            } else {
-                codeGenBody.textContent = `<body style=""></body>`;
-            }
-            delete codeGenBody.dataset.highlighted;
-            hljs.highlightElement(codeGenBody);
-        }
 
         // Apply styles to page if checkbox is checked
         if (isChecked && hex) {
@@ -421,6 +453,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         updateURLParams();
+        updateGeneratedCode();
     };
 
     const updateMetaColors = (hexColor, applyStyle = true) => {
@@ -428,17 +461,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const inputValue = document.getElementById("color-picker-meta").value;
         const isChecked = metaCheckbox && metaCheckbox.checked;
         const hex = inputValue && inputValue !== 'inherit' ? normalizeColor(inputValue) : null;
-
-        // Generate code based on checkbox state
-        if (codeGenMeta) {
-            if (hex && isChecked) {
-                codeGenMeta.textContent = `<head>\n  <meta name="theme-color" content="${hex}">\n</head>`;
-            } else {
-                codeGenMeta.textContent = `<head>\n  <meta name="theme-color" content="">\n</head>`;
-            }
-            delete codeGenMeta.dataset.highlighted;
-            hljs.highlightElement(codeGenMeta);
-        }
 
         // Only apply meta theme color if applyStyle is true and checkbox is checked
         const shouldApplyColor = applyStyle && metaCheckbox && metaCheckbox.checked && hexColor && hexColor.trim() !== '';
@@ -451,6 +473,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         updateURLParams();
+        updateGeneratedCode();
     };
 
     const updateFixedColors = (hexColor, applyStyle = true) => {
@@ -458,17 +481,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const inputValue = document.getElementById("color-picker-fixed").value;
         const isChecked = fixedCheckbox && fixedCheckbox.checked;
         const hex = inputValue && inputValue !== 'inherit' ? normalizeColor(inputValue) : null;
-
-        // Generate code based on checkbox state
-        if (codeGenFixed) {
-            if (hex && isChecked) {
-                codeGenFixed.textContent = `<div id="fixed-top" style="background-color: ${hex};"></div>`;
-            } else {
-                codeGenFixed.textContent = `<div id="fixed-top" style=""></div>`;
-            }
-            delete codeGenFixed.dataset.highlighted;
-            hljs.highlightElement(codeGenFixed);
-        }
 
         // Only apply fixed colors if applyStyle is true and checkbox is checked
         const shouldApplyColor = applyStyle && fixedCheckbox && fixedCheckbox.checked && hexColor && hexColor.trim() !== '';
@@ -491,6 +503,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         updateURLParams();
+        updateGeneratedCode();
     };
 
     // Define fixed and meta change handlers at module scope so they can be reused
@@ -609,7 +622,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Store initial values: URL param if exists and valid, otherwise use hardcoded defaults
     const initialBodyColorValue = extractColorFromParam(capturedBodyParam) || '#0088FF';
-    const initialFixedColorValue = extractColorFromParam(capturedFixedParam) || '#FF7700';
+    const initialFixedColorValue = extractColorFromParam(capturedFixedParam) || '#FFCC33';
     const initialMetaColorValue = extractColorFromParam(capturedMetaParam) || '#363636';
 
     const initializeColorPickers = () => {
@@ -660,7 +673,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     fixedColorPicker.dispose();
                     fixedColorPicker = new ColorPicker(fixedPickerInput, {
                         colorPresets: bootstrapColors,
-                        colorKeywords: `#FF7700:default,${initialFixedColorValue}:initial,${newFixedTriadicHex}:complement`
+                        colorKeywords: `#FFCC33:default,${initialFixedColorValue}:initial,${newFixedTriadicHex}:complement`
                     });
                     fixedPickerInput.value = currentFixedValue;
                     if (currentFixedValue) {
@@ -732,7 +745,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 fixedColorPicker.dispose();
                 fixedColorPicker = new ColorPicker(fixedPickerInput, {
                     colorPresets: bootstrapColors,
-                    colorKeywords: `#FF7700:default,${initialFixedColorValue}:initial,${newFixedTriadicHex}:complement`
+                    colorKeywords: `#FFCC33:default,${initialFixedColorValue}:initial,${newFixedTriadicHex}:complement`
                 });
                 // Restore the value
                 fixedPickerInput.value = currentFixedValue;
@@ -871,7 +884,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // For now, use a placeholder that will be updated
         fixedColorPicker = new ColorPicker(fixedPickerInput, {
             colorPresets: bootstrapColors,
-            colorKeywords: `#FF7700:default,${initialFixedColorValue}:initial,#0088FF:complement`
+            colorKeywords: `#FFCC33:default,${initialFixedColorValue}:initial,#0088FF:complement`
         });
 
         // Only listen to colorpicker.change (when using the visual picker)
@@ -1058,10 +1071,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error("Failed to set fixed color from URL:", e);
             }
         } else {
-            // No fixed param in URL - set default value but leave unchecked
+            // No fixed param in URL - set default value and check by default
             try {
-                document.getElementById("color-picker-fixed").value = "#FF7700";
-                if (fixedCheckbox) fixedCheckbox.checked = false;
+                document.getElementById("color-picker-fixed").value = "#FFCC33";
+                if (fixedCheckbox) fixedCheckbox.checked = true;
             } catch (e) {
                 console.error("Failed to set default fixed color:", e);
             }
@@ -1097,7 +1110,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 fixedColorPicker.dispose();
                 fixedColorPicker = new ColorPicker(fixedPickerInput, {
                     colorPresets: bootstrapColors,
-                    colorKeywords: `#FF7700:default,${initialFixedColorValue}:initial,${newFixedTriadicHex}:complement`
+                    colorKeywords: `#FFCC33:default,${initialFixedColorValue}:initial,${newFixedTriadicHex}:complement`
                 });
                 // Restore the value and re-attach event handlers
                 fixedPickerInput.value = currentFixedValue;
@@ -1174,10 +1187,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize highlight.js after initial colors are set
     hljs.highlightAll();
 
-    // Apply highlight.js to fixed code block if it has content
-    if (codeGenFixed && codeGenFixed.textContent.trim() !== '') {
-        delete codeGenFixed.dataset.highlighted;
-        hljs.highlightElement(codeGenFixed);
+    // Apply highlight.js to generated code block if it has content
+    if (codeGenExample && codeGenExample.textContent.trim() !== '') {
+        delete codeGenExample.dataset.highlighted;
+        hljs.highlightElement(codeGenExample);
     }
 
     // Fallback function for copying to clipboard in non-secure contexts

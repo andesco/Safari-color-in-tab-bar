@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Safari Demo: Color in Tab Bar</title>
+<title>Safari Color Tinting: Demo</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@thednp/color-picker@2/dist/css/color-picker.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github-dark-dimmed.min.css">
@@ -19,7 +19,7 @@
 <meta property="og:url" content="https://safari-color-in-tab-bar.pages.dev" />
 <meta property="og:site_name" content="Andrew Escobar: notes" />
 <meta property="og:type" content="website" />
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=22">
 <meta name="theme-color" content="#FDFAE0">
 </head>
 
@@ -27,22 +27,20 @@
     <div id="fixed-top"></div>
     <div id="fixed-bottom"></div>
 
-<h1><a href="/">Safari Demo: Color in Tab Bar</a></h1>
+<h1><a href="/">Safari Color Tinting: Demo</a></h1>
 
     <h3 id="not-safari-notice">Safari 15.0 or above required</h3>
 
-    <h2>macOS: Safari › Setting › Tabs › Appearance: ✓ Show color in tab bar</h2>
-    <h2>iOS: Setting › Apps › Safari › Tabs: ✓ Top</h2>
-
     <div class="button-container">
-        <button id="shareButton" class="action-button">Share</button>
-        <button id="copyButton" class="action-button">Copy</button>
+    <button id="shareButton" class="action-button">Share</button>
+    <button id="copyButton" class="action-button">Copy</button>
     </div>
 
+<!-- start .cards-flex-wrapper -->
 <div class="cards-flex-wrapper">
 <!-- first card-container for body background -->
     <div class="card-container">
-        <h4 class="code-gen-title">Body Background Color</h4>
+        <h4 class="color-setting">Body Background</h4>
         <div class="color-picker-wrapper">
             <input type="checkbox" id="checkbox-body" class="color-checkbox" checked>
             <div class="color-picker">
@@ -52,7 +50,7 @@
     </div>
 <!-- second card-container for fixed position background -->
     <div class="card-container">
-        <h4 class="code-gen-title">Fixed Position Background Color</h4>
+        <h4 class="color-setting">Fixed Position Background</h4>
         <div class="color-picker-wrapper">
             <input type="checkbox" id="checkbox-fixed" class="color-checkbox">
             <div class="color-picker">
@@ -62,7 +60,7 @@
     </div>
 <!-- third card-container for meta theme -->
     <div class="card-container">
-        <h4 class="code-gen-title">Meta Theme Color</h4>
+        <h4 class="color-setting">Meta Theme Color</h4>
         <div class="color-picker-wrapper">
             <input type="checkbox" id="checkbox-meta" class="color-checkbox">
             <div class="color-picker">
@@ -71,20 +69,30 @@
         </div>
     </div>
 </div>
+<!-- end .cards-flex-wrapper -->
 
 <!-- fourth card-container for generated code -->
     <div class="card-container">
-        <h4 class="code-gen-title">Generated Code</h4>
-        <code id="code-gen-body" class="language-html code-gen"></code>
-        <code id="code-gen-fixed" class="language-html code-gen"></code>
-        <code id="code-gen-meta" class="language-html code-gen"></code>
+        <h4 class="code-example">Generated Code Example</h4>
+        <code id="code-gen-example" class="language-html code-gen"></code>
     </div>
 
-<script src="luma.js?v=8"></script>
-<script src="script.js?v=8"></script>
+<!-- fifth card-container for Safari How To -->
+    <div class="card-container safari-settings">
+        <h4>How to enable browser UI color tinting in Safari:</h4>
+        <p>
+        <b>macOS</b>: Safari › Setting › Tabs › Appearance: ✓ Show color in tab bar
+        <br /><br />
+        <b>iOS</b>: Setting › Apps › Safari › <nobr>Tabs: Allow Website Tinting ✓</nobr>
+    </div>
+
+
+
+<script src="luma.js?v=13"></script>
+<script src="script.js?v=13"></script>
 
 <footer>
-    <p><a href="https://github.com/andesco/Safari-color-in-tab-bar">github.com/andesco/safari-color-in-tab-bar</a><br /><br />&copy; 2025 Andrew Escobar</p>
+    <p><a href="https://github.com/andesco/safari-color-tinting">github.com/andesco/safari-color-tinting</a><br /><br />&copy; 2025 Andrew Escobar</p>
 </footer>
 
 </body>
