@@ -6,7 +6,7 @@ Apple has quietly abandoned support for using `<meta name="theme-color">` to the
 
 View how your web browser supports color in its UI:
 
-### [Safari Demo: Color in Tab Bar](https://safari-color-tinting.pages.dev)
+### [safari-color-tinting.pages.dev](http://safari-color-tinting.pages.dev "Safari Color Tinting: Demo")
 
 ## Safari 15+: `<meta>`
 Safari versions 15 through 18.6 supported a <nobr><code>theme-color</code></nobr> meta tag, allowing developers to directly declare the color of browser UI elements.
