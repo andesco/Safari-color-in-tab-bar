@@ -1,3 +1,5 @@
+<img src="images/safari-macOS-26.png" alt="Safari macOS Tab Bar" style="max-width: 551px; display: block; margin: 0 auto;">
+
 #  Safari Color Tinting: Demo
 
 Apple has quietly abandoned support for using `<meta name="theme-color">` to theme or color Safari’s browser UI, in favor of using the `background-color` of standard page element.
