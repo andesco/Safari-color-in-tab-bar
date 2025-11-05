@@ -1,10 +1,10 @@
-#  Safari Demo: Color in Tab Bar
+#  Safari Color Tinting: Demo
 
 Apple has quietly abandoned support for using `<meta name="theme-color">` to theme or color Safari’s browser UI, in favor of using the `background-color` of standard page element.
 
 View how your web browser supports color in its UI:
 
-### [Safari Demo: Color in Tab Bar](https://safari-color-in-tab-bar.pages.dev)
+### [Safari Demo: Color in Tab Bar](https://safari-color-tinting.pages.dev)
 
 ## Safari 15+: `<meta>`
 Safari versions 15 through 18.6 supported a <nobr><code>theme-color</code></nobr> meta tag, allowing developers to directly declare the color of browser UI elements.
@@ -58,15 +58,13 @@ Safari uses the luma (perceived brightness) of the selected color to determine i
 
 ## Safari Settings
 
-Users can enable or disable color in the tab bar:
+Users can enable or disable browser UI color tinting in Safari:
 
 <!-- :icon-chevron-right: &rsaquo; -->
 <!-- :icon-checkbox: ✓ -->
-**macOS**:\
-Safari &rsaquo; Settings &rsaquo; Tabs &rsaquo; Appearance: <nobr>✓ Show color in tab bar</nobr>
+**macOS**: Safari &rsaquo; Settings &rsaquo; Tabs &rsaquo; Appearance: <nobr>✓ Show color in tab bar</nobr>
 
-**iOS**:\
-Settings &rsaquo; Apps › Safari &rsaquo; Tabs: <nobr>✓ Top</nobr>
+**iOS**: Settings &rsaquo; Apps › Safari &rsaquo; Tabs: <nobr>Allow Website Tinting ✓</nobr>
 
 &nbsp;
 
