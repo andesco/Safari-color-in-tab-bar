@@ -63,6 +63,13 @@ const expandHex = (hex) => {
     return clean; // Already 6 digits or invalid
 };
 
+// Convert ColorPicker.Color object to 6-digit hex string
+// ColorPicker's toString() may return 3-digit shorthand, so we expand it
+const toHex6 = (colorObj) => {
+    const hexString = colorObj.toString(); // May be 3 or 6 digit
+    const clean = hexString.replace(/^#/, '');
+    return '#' + expandHex(clean);
+};
 
 const hexToRgb = (hex) => {
     const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
@@ -651,7 +658,7 @@ ${headContent ? headContent + '\n' : ''}</head>
                 // Update fixed and meta pickers' complement colors to use default color
                 const defaultBodyColor = new ColorPicker.Color('#0088FF');
                 const newFixedTriadic = defaultBodyColor.clone().spin(180);
-                const newFixedTriadicHex = newFixedTriadic.toString().toUpperCase();
+                const newFixedTriadicHex = toHex6(newFixedTriadic);
 
                 if (fixedColorPicker) {
                     const fixedPickerInput = document.getElementById("color-picker-fixed");
@@ -676,7 +683,7 @@ ${headContent ? headContent + '\n' : ''}</head>
                     metaColorPicker.dispose();
 
                     const newTriadic = defaultBodyColor.clone().spin(180);
-                    const newTriadicHex = newTriadic.toString();
+                    const newTriadicHex = toHex6(newTriadic);
 
                     const metaKeywords = `#363636:default,${initialMetaColorValue}:initial,${newTriadicHex}:complement`;
 
@@ -718,7 +725,7 @@ ${headContent ? headContent + '\n' : ''}</head>
             // Update fixed and meta pickers' complement colors in colorKeywords
             const currentBodyColor = bodyColorPicker.color;
             const newFixedTriadic = currentBodyColor.clone().spin(180);
-            const newFixedTriadicHex = newFixedTriadic.toString();
+            const newFixedTriadicHex = toHex6(newFixedTriadic);
 
             if (fixedColorPicker) {
                 // Dispose and recreate the fixed picker with new colorKeywords
@@ -748,7 +755,7 @@ ${headContent ? headContent + '\n' : ''}</head>
                 metaColorPicker.dispose();
 
                 const newTriadic = currentBodyColor.clone().spin(180);
-                const newTriadicHex = newTriadic.toString();
+                const newTriadicHex = toHex6(newTriadic);
 
                 const metaKeywords = initialMetaColorValue
                     ? `:default,${initialMetaColorValue}:initial,${newTriadicHex}:complement`
@@ -963,23 +970,23 @@ ${headContent ? headContent + '\n' : ''}</head>
             if (bodyParam.color && bodyParam.color !== 'inherit') {
                 // Body is set: Fixed = Body-120°, Meta = Body+120°
                 const bodyColor = new ColorPicker.Color(bodyParam.color);
-                fixedParam.color = bodyColor.clone().spin(180).toString();
+                fixedParam.color = toHex6(bodyColor.clone().spin(180));
                 fixedParam.checked = true;
-                metaParam.color = bodyColor.clone().spin(180).toString();
+                metaParam.color = toHex6(bodyColor.clone().spin(180));
                 metaParam.checked = true;
             } else if (fixedParam.color && fixedParam.color !== 'inherit') {
                 // Fixed is set: Body = Fixed+120°, Meta = Fixed+240° (or Fixed-120°)
                 const fixedColor = new ColorPicker.Color(fixedParam.color);
-                bodyParam.color = fixedColor.clone().spin(180).toString();
+                bodyParam.color = toHex6(fixedColor.clone().spin(180));
                 bodyParam.checked = true;
-                metaParam.color = fixedColor.clone().spin(180).toString();
+                metaParam.color = toHex6(fixedColor.clone().spin(180));
                 metaParam.checked = true;
             } else if (metaParam.color && metaParam.color !== 'inherit') {
                 // Meta is set: Body = Meta-120°, Fixed = Meta-240° (or Meta+120°)
                 const metaColor = new ColorPicker.Color(metaParam.color);
-                bodyParam.color = metaColor.clone().spin(180).toString();
+                bodyParam.color = toHex6(metaColor.clone().spin(180));
                 bodyParam.checked = true;
-                fixedParam.color = metaColor.clone().spin(180).toString();
+                fixedParam.color = toHex6(metaColor.clone().spin(180));
                 fixedParam.checked = true;
             }
         }
@@ -1057,7 +1064,7 @@ ${headContent ? headContent + '\n' : ''}</head>
             // Update fixed and meta pickers' complement colors after body color is set from URL
             const currentBodyColor = bodyColorPicker.color;
             const newFixedTriadic = currentBodyColor.clone().spin(180);
-            const newFixedTriadicHex = newFixedTriadic.toString();
+            const newFixedTriadicHex = toHex6(newFixedTriadic);
 
             if (fixedColorPicker) {
                 // Dispose and recreate the fixed picker with new colorKeywords
@@ -1086,7 +1093,7 @@ ${headContent ? headContent + '\n' : ''}</head>
                 metaColorPicker.dispose();
 
                 const newTriadic = currentBodyColor.clone().spin(180);
-                const newTriadicHex = newTriadic.toString();
+                const newTriadicHex = toHex6(newTriadic);
 
                 const metaKeywords = initialMetaColorValue
                     ? `:default,${initialMetaColorValue}:initial,${newTriadicHex}:complement`
