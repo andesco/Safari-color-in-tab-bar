@@ -35,46 +35,34 @@ const selectThemeWithLuma = (bgColor) => {
 };
 
 // Check if 6-digit hex can be shortened to 3-digit
-// Can only shorten if each character appears twice: AABBCC → ABC
+// Can only shorten if each character appears twice: aabbcc → abc
 const canShortenHex = (hex) => {
-    // Remove # if present and ensure uppercase
-    const clean = hex.replace(/^#/, '').toUpperCase();
+    // Remove # if present and ensure lowercase
+    const clean = hex.replace(/^#/, '').toLowerCase();
     if (clean.length !== 6) return false;
 
-    // Check if pattern is AABBCC (each char doubles)
+    // Check if pattern is aabbcc (each char doubles)
     return clean[0] === clean[1] && clean[2] === clean[3] && clean[4] === clean[5];
 };
 
-// Shorten 6-digit hex to 3-digit: 0088FF → 08F
+// Shorten 6-digit hex to 3-digit: 0088ff → 08f
 const shortenHex = (hex) => {
-    const clean = hex.replace(/^#/, '').toUpperCase();
+    const clean = hex.replace(/^#/, '').toLowerCase();
     if (clean.length === 6 && canShortenHex(clean)) {
         return clean[0] + clean[2] + clean[4];
     }
     return clean; // Return as-is if can't shorten
 };
 
-// Expand 3-digit hex to 6-digit: 08F → 0088FF
+// Expand 3-digit hex to 6-digit: 08f → 0088ff
 const expandHex = (hex) => {
-    const clean = hex.replace(/^#/, '').toUpperCase();
+    const clean = hex.replace(/^#/, '').toLowerCase();
     if (clean.length === 3) {
         return clean[0] + clean[0] + clean[1] + clean[1] + clean[2] + clean[2];
     }
     return clean; // Already 6 digits or invalid
 };
 
-// Helper function to force uppercase and 6-digit hex in picker input after update
-const uppercasePickerValue = (picker, inputElement) => {
-    if (inputElement && inputElement.value) {
-        const value = inputElement.value;
-        if (value.startsWith('#')) {
-            const hex = value.substring(1);
-            // Expand 3-digit to 6-digit if needed
-            const expanded = hex.length === 3 ? expandHex(hex) : hex;
-            inputElement.value = '#' + expanded.toUpperCase();
-        }
-    }
-};
 
 const hexToRgb = (hex) => {
     const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
@@ -127,8 +115,8 @@ const normalizeHex = (hex) => {
     // Ensure we only have 6 characters
     hex = hex.substring(0, 6);
 
-    // Return with # prefix in uppercase
-    return '#' + hex.toUpperCase();
+    // Return with # prefix in lowercase
+    return '#' + hex.toLowerCase();
 };
 
 // Normalize color value based on format
@@ -145,7 +133,7 @@ const normalizeColor = (value) => {
     return normalizeHex(str);
 };
 
-const rgbToHex = (r, g, b) => "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+const rgbToHex = (r, g, b) => "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
 
 // Helper function to convert HEX to HSL
 const hexToHsl = (hex) => {
@@ -530,7 +518,6 @@ ${headContent ? headContent + '\n' : ''}</head>
                 try {
                     fixedColorPicker.color = new ColorPicker.Color(normalized);
                     fixedColorPicker.update();
-                    uppercasePickerValue(fixedColorPicker, document.getElementById("color-picker-fixed"));
                     console.log('Successfully updated fixedColorPicker');
                 } catch (error) {
                     console.error("Failed to update fixed color picker:", error);
@@ -570,7 +557,6 @@ ${headContent ? headContent + '\n' : ''}</head>
                 try {
                     metaColorPicker.color = new ColorPicker.Color(normalized);
                     metaColorPicker.update();
-                    uppercasePickerValue(metaColorPicker, document.getElementById("color-picker-meta"));
                 } catch (error) {
                     console.error("Failed to update meta color picker:", error);
                 }
@@ -679,7 +665,6 @@ ${headContent ? headContent + '\n' : ''}</head>
                     if (currentFixedValue) {
                         fixedColorPicker.color = new ColorPicker.Color(currentFixedValue);
                         fixedColorPicker.update();
-                        uppercasePickerValue(fixedColorPicker, fixedPickerInput);
                     }
                     fixedPickerInput.addEventListener("colorpicker.change", handleFixedChange);
                     fixedPickerInput.addEventListener("change", handleFixedChange);
@@ -691,7 +676,7 @@ ${headContent ? headContent + '\n' : ''}</head>
                     metaColorPicker.dispose();
 
                     const newTriadic = defaultBodyColor.clone().spin(180);
-                    const newTriadicHex = newTriadic.toString().toUpperCase();
+                    const newTriadicHex = newTriadic.toString();
 
                     const metaKeywords = `#363636:default,${initialMetaColorValue}:initial,${newTriadicHex}:complement`;
 
@@ -703,7 +688,6 @@ ${headContent ? headContent + '\n' : ''}</head>
                     if (currentMetaValue) {
                         metaColorPicker.color = new ColorPicker.Color(currentMetaValue);
                         metaColorPicker.update();
-                        uppercasePickerValue(metaColorPicker, metaPickerInput);
                     }
                     metaPickerInput.addEventListener("colorpicker.change", handleMetaChange);
                     metaPickerInput.addEventListener("change", handleMetaChange);
@@ -721,7 +705,6 @@ ${headContent ? headContent + '\n' : ''}</head>
                 try {
                     bodyColorPicker.color = new ColorPicker.Color(normalized);
                     bodyColorPicker.update();
-                    uppercasePickerValue(bodyColorPicker, bodyPickerInput);
                 } catch (error) {
                     console.error("Failed to update body color picker:", error);
                 }
@@ -735,7 +718,7 @@ ${headContent ? headContent + '\n' : ''}</head>
             // Update fixed and meta pickers' complement colors in colorKeywords
             const currentBodyColor = bodyColorPicker.color;
             const newFixedTriadic = currentBodyColor.clone().spin(180);
-            const newFixedTriadicHex = newFixedTriadic.toString().toUpperCase();
+            const newFixedTriadicHex = newFixedTriadic.toString();
 
             if (fixedColorPicker) {
                 // Dispose and recreate the fixed picker with new colorKeywords
@@ -751,7 +734,6 @@ ${headContent ? headContent + '\n' : ''}</head>
                 fixedPickerInput.value = currentFixedValue;
                 fixedColorPicker.color = new ColorPicker.Color(currentFixedValue);
                 fixedColorPicker.update();
-                uppercasePickerValue(fixedColorPicker, fixedPickerInput);
 
                 // Re-attach event handlers
                 fixedPickerInput.addEventListener("colorpicker.change", handleFixedChange);
@@ -766,7 +748,7 @@ ${headContent ? headContent + '\n' : ''}</head>
                 metaColorPicker.dispose();
 
                 const newTriadic = currentBodyColor.clone().spin(180);
-                const newTriadicHex = newTriadic.toString().toUpperCase();
+                const newTriadicHex = newTriadic.toString();
 
                 const metaKeywords = initialMetaColorValue
                     ? `:default,${initialMetaColorValue}:initial,${newTriadicHex}:complement`
@@ -781,7 +763,6 @@ ${headContent ? headContent + '\n' : ''}</head>
                 if (currentMetaValue) {
                     metaColorPicker.color = new ColorPicker.Color(currentMetaValue);
                     metaColorPicker.update();
-                    uppercasePickerValue(metaColorPicker, metaPickerInput);
                 }
 
                 // Re-attach event handlers
@@ -795,13 +776,6 @@ ${headContent ? headContent + '\n' : ''}</head>
         // Only listen to colorpicker.change (when using the visual picker)
         bodyPickerInput.addEventListener("colorpicker.change", handleBodyChange);
 
-        // Force uppercase when picker shows/hides
-        bodyPickerInput.addEventListener("colorpicker.show", () => {
-            setTimeout(() => uppercasePickerValue(bodyColorPicker, bodyPickerInput), 0);
-        });
-        bodyPickerInput.addEventListener("colorpicker.close", () => {
-            setTimeout(() => uppercasePickerValue(bodyColorPicker, bodyPickerInput), 0);
-        });
 
         // Use blur event to handle manual text input
         // This fires when user clicks away or tabs out
@@ -843,14 +817,6 @@ ${headContent ? headContent + '\n' : ''}</head>
         // Only listen to colorpicker.change (when using the visual picker)
         metaPickerInput.addEventListener("colorpicker.change", handleMetaChange);
 
-        // Force uppercase when picker shows/hides
-        metaPickerInput.addEventListener("colorpicker.show", () => {
-            setTimeout(() => uppercasePickerValue(metaColorPicker, metaPickerInput), 0);
-        });
-        metaPickerInput.addEventListener("colorpicker.close", () => {
-            setTimeout(() => uppercasePickerValue(metaColorPicker, metaPickerInput), 0);
-        });
-
         // Use blur event to handle manual text input
         // This fires when user clicks away or tabs out
         metaPickerInput.addEventListener("blur", function(e) {
@@ -889,14 +855,6 @@ ${headContent ? headContent + '\n' : ''}</head>
 
         // Only listen to colorpicker.change (when using the visual picker)
         fixedPickerInput.addEventListener("colorpicker.change", handleFixedChange);
-
-        // Force uppercase when picker shows/hides
-        fixedPickerInput.addEventListener("colorpicker.show", () => {
-            setTimeout(() => uppercasePickerValue(fixedColorPicker, fixedPickerInput), 0);
-        });
-        fixedPickerInput.addEventListener("colorpicker.close", () => {
-            setTimeout(() => uppercasePickerValue(fixedColorPicker, fixedPickerInput), 0);
-        });
 
         // Use blur event to handle manual text input
         // This fires when user clicks away or tabs out
@@ -1005,23 +963,23 @@ ${headContent ? headContent + '\n' : ''}</head>
             if (bodyParam.color && bodyParam.color !== 'inherit') {
                 // Body is set: Fixed = Body-120°, Meta = Body+120°
                 const bodyColor = new ColorPicker.Color(bodyParam.color);
-                fixedParam.color = bodyColor.clone().spin(180).toString().toUpperCase();
+                fixedParam.color = bodyColor.clone().spin(180).toString();
                 fixedParam.checked = true;
-                metaParam.color = bodyColor.clone().spin(180).toString().toUpperCase();
+                metaParam.color = bodyColor.clone().spin(180).toString();
                 metaParam.checked = true;
             } else if (fixedParam.color && fixedParam.color !== 'inherit') {
                 // Fixed is set: Body = Fixed+120°, Meta = Fixed+240° (or Fixed-120°)
                 const fixedColor = new ColorPicker.Color(fixedParam.color);
-                bodyParam.color = fixedColor.clone().spin(180).toString().toUpperCase();
+                bodyParam.color = fixedColor.clone().spin(180).toString();
                 bodyParam.checked = true;
-                metaParam.color = fixedColor.clone().spin(180).toString().toUpperCase();
+                metaParam.color = fixedColor.clone().spin(180).toString();
                 metaParam.checked = true;
             } else if (metaParam.color && metaParam.color !== 'inherit') {
                 // Meta is set: Body = Meta-120°, Fixed = Meta-240° (or Meta+120°)
                 const metaColor = new ColorPicker.Color(metaParam.color);
-                bodyParam.color = metaColor.clone().spin(180).toString().toUpperCase();
+                bodyParam.color = metaColor.clone().spin(180).toString();
                 bodyParam.checked = true;
-                fixedParam.color = metaColor.clone().spin(180).toString().toUpperCase();
+                fixedParam.color = metaColor.clone().spin(180).toString();
                 fixedParam.checked = true;
             }
         }
@@ -1095,12 +1053,11 @@ ${headContent ? headContent + '\n' : ''}</head>
         if (bodyInputValue && bodyInputValue !== '') {
             bodyColorPicker.color = new ColorPicker.Color(bodyInputValue);
             bodyColorPicker.update();
-            uppercasePickerValue(bodyColorPicker, document.getElementById("color-picker-body"));
 
             // Update fixed and meta pickers' complement colors after body color is set from URL
             const currentBodyColor = bodyColorPicker.color;
             const newFixedTriadic = currentBodyColor.clone().spin(180);
-            const newFixedTriadicHex = newFixedTriadic.toString().toUpperCase();
+            const newFixedTriadicHex = newFixedTriadic.toString();
 
             if (fixedColorPicker) {
                 // Dispose and recreate the fixed picker with new colorKeywords
@@ -1116,7 +1073,6 @@ ${headContent ? headContent + '\n' : ''}</head>
                 fixedPickerInput.value = currentFixedValue;
                 fixedColorPicker.color = new ColorPicker.Color(currentFixedValue);
                 fixedColorPicker.update();
-                uppercasePickerValue(fixedColorPicker, fixedPickerInput);
 
                 // handleFixedChange is already defined earlier
                 fixedPickerInput.addEventListener("colorpicker.change", handleFixedChange);
@@ -1130,7 +1086,7 @@ ${headContent ? headContent + '\n' : ''}</head>
                 metaColorPicker.dispose();
 
                 const newTriadic = currentBodyColor.clone().spin(180);
-                const newTriadicHex = newTriadic.toString().toUpperCase();
+                const newTriadicHex = newTriadic.toString();
 
                 const metaKeywords = initialMetaColorValue
                     ? `:default,${initialMetaColorValue}:initial,${newTriadicHex}:complement`
@@ -1145,7 +1101,6 @@ ${headContent ? headContent + '\n' : ''}</head>
                 if (currentMetaValue) {
                     metaColorPicker.color = new ColorPicker.Color(currentMetaValue);
                     metaColorPicker.update();
-                    uppercasePickerValue(metaColorPicker, metaPickerInput);
                 }
 
                 // handleMetaChange is already defined earlier
@@ -1158,7 +1113,6 @@ ${headContent ? headContent + '\n' : ''}</head>
         if (metaInputValue && metaInputValue !== '') {
             metaColorPicker.color = new ColorPicker.Color(metaInputValue);
             metaColorPicker.update();
-            uppercasePickerValue(metaColorPicker, document.getElementById("color-picker-meta"));
         }
     }
     if (fixedColorPicker) {
@@ -1166,7 +1120,6 @@ ${headContent ? headContent + '\n' : ''}</head>
         if (fixedInputValue && fixedInputValue !== '') {
             fixedColorPicker.color = new ColorPicker.Color(fixedInputValue);
             fixedColorPicker.update();
-            uppercasePickerValue(fixedColorPicker, document.getElementById("color-picker-fixed"));
         }
     }
 
@@ -1225,15 +1178,15 @@ ${headContent ? headContent + '\n' : ''}</head>
         shareButton.addEventListener("click", () => {
             // Get hex values and checkbox states
             const bodyPickerValue = document.getElementById("color-picker-body").value;
-            let bodyColorHex = (bodyPickerValue && bodyPickerValue !== 'inherit') ? expandHex(bodyPickerValue.substring(1)).toUpperCase() : '';
+            let bodyColorHex = (bodyPickerValue && bodyPickerValue !== 'inherit') ? expandHex(bodyPickerValue.substring(1)) : '';
             const bodyChecked = bodyCheckbox ? bodyCheckbox.checked : true;
 
             const metaPickerValue = document.getElementById("color-picker-meta").value;
-            let metaColorHex = (metaPickerValue && metaPickerValue !== 'inherit') ? expandHex(metaPickerValue.substring(1)).toUpperCase() : '';
+            let metaColorHex = (metaPickerValue && metaPickerValue !== 'inherit') ? expandHex(metaPickerValue.substring(1)) : '';
             const metaChecked = metaCheckbox ? metaCheckbox.checked : false;
 
             const fixedPickerValue = document.getElementById("color-picker-fixed").value;
-            let fixedColorHex = (fixedPickerValue && fixedPickerValue !== 'inherit') ? expandHex(fixedPickerValue.substring(1)).toUpperCase() : '';
+            let fixedColorHex = (fixedPickerValue && fixedPickerValue !== 'inherit') ? expandHex(fixedPickerValue.substring(1)) : '';
             const fixedChecked = fixedCheckbox ? fixedCheckbox.checked : false;
 
             // New format: omit "1," prefix when checked (implicit), add "0," when unchecked
@@ -1281,15 +1234,15 @@ ${headContent ? headContent + '\n' : ''}</head>
 
             // Get hex values and checkbox states
             const bodyPickerValue = document.getElementById("color-picker-body").value;
-            let bodyColorHex = (bodyPickerValue && bodyPickerValue !== 'inherit') ? expandHex(bodyPickerValue.substring(1)).toUpperCase() : '';
+            let bodyColorHex = (bodyPickerValue && bodyPickerValue !== 'inherit') ? expandHex(bodyPickerValue.substring(1)) : '';
             const bodyChecked = bodyCheckbox ? bodyCheckbox.checked : true;
 
             const metaPickerValue = document.getElementById("color-picker-meta").value;
-            let metaColorHex = (metaPickerValue && metaPickerValue !== 'inherit') ? expandHex(metaPickerValue.substring(1)).toUpperCase() : '';
+            let metaColorHex = (metaPickerValue && metaPickerValue !== 'inherit') ? expandHex(metaPickerValue.substring(1)) : '';
             const metaChecked = metaCheckbox ? metaCheckbox.checked : false;
 
             const fixedPickerValue = document.getElementById("color-picker-fixed").value;
-            let fixedColorHex = (fixedPickerValue && fixedPickerValue !== 'inherit') ? expandHex(fixedPickerValue.substring(1)).toUpperCase() : '';
+            let fixedColorHex = (fixedPickerValue && fixedPickerValue !== 'inherit') ? expandHex(fixedPickerValue.substring(1)) : '';
             const fixedChecked = fixedCheckbox ? fixedCheckbox.checked : false;
 
             console.log('Copy Button Clicked:');
