@@ -386,13 +386,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         let divStyle = 'position: fixed; top: 0;';
-        if (fixedHex && fixedChecked) {
+        if (fixedHex) {
             divStyle += ` background-color: ${fixedHex};`;
+        }
+        if (!fixedChecked) {
+            divStyle += ' display: none;';
         }
 
         const codeExample = `<head>
 ${headContent ? headContent + '\n' : ''}</head>
-<body style="${bodyStyle}">
+<body${bodyStyle ? ` style="${bodyStyle}"` : ''}>
     <div style="${divStyle}">
     </div>
 </body>`;
@@ -452,19 +455,17 @@ ${headContent ? headContent + '\n' : ''}</head>
     };
 
     const updateMetaColors = (hexColor, applyStyle = true) => {
-        // Get the current input value and checkbox state
+        // Get the current input value
         const inputValue = document.getElementById("color-picker-meta").value;
-        const isChecked = metaCheckbox && metaCheckbox.checked;
         const hex = inputValue && inputValue !== 'inherit' ? normalizeColor(inputValue) : null;
 
-        // Only apply meta theme color if applyStyle is true and checkbox is checked
-        const shouldApplyColor = applyStyle && metaCheckbox && metaCheckbox.checked && hexColor && hexColor.trim() !== '';
-
-        if (shouldApplyColor) {
+        // Only update if tag exists in DOM and we have a valid color
+        const metaTag = document.querySelector('meta[name="theme-color"]');
+        if (metaTag && applyStyle && hexColor && hexColor.trim() !== '') {
             const colorToApply = normalizeColor(hexColor);
-            metaThemeColor.content = colorToApply;
-        } else {
-            metaThemeColor.content = '';
+            metaTag.content = colorToApply;
+        } else if (metaTag && (!hexColor || hexColor.trim() === '')) {
+            metaTag.content = '';
         }
 
         updateURLParams();
@@ -472,15 +473,12 @@ ${headContent ? headContent + '\n' : ''}</head>
     };
 
     const updateFixedColors = (hexColor, applyStyle = true) => {
-        // Get the current input value and checkbox state
+        // Get the current input value
         const inputValue = document.getElementById("color-picker-fixed").value;
-        const isChecked = fixedCheckbox && fixedCheckbox.checked;
         const hex = inputValue && inputValue !== 'inherit' ? normalizeColor(inputValue) : null;
 
-        // Only apply fixed colors if applyStyle is true and checkbox is checked
-        const shouldApplyColor = applyStyle && fixedCheckbox && fixedCheckbox.checked && hexColor && hexColor.trim() !== '';
-
-        if (shouldApplyColor) {
+        // Always apply backgroundColor when there's a valid color
+        if (applyStyle && hexColor && hexColor.trim() !== '') {
             const colorToApply = normalizeColor(hexColor);
             if (fixedTopElement) {
                 fixedTopElement.style.backgroundColor = colorToApply;
@@ -489,6 +487,7 @@ ${headContent ? headContent + '\n' : ''}</head>
                 fixedBottomElement.style.backgroundColor = colorToApply;
             }
         } else {
+            // Clear backgroundColor when no color
             if (fixedTopElement) {
                 fixedTopElement.style.backgroundColor = '';
             }
@@ -889,20 +888,28 @@ ${headContent ? headContent + '\n' : ''}</head>
         });
 
         metaCheckbox.addEventListener("change", function() {
-            const currentValue = document.getElementById("color-picker-meta").value;
-            // Always pass the current value - the function will handle checkbox state
-            updateMetaColors(currentValue);
-            // Reload page to force Safari to re-sample colors when unchecked
             if (!this.checked) {
-                window.location.reload();
+                // Remove meta tag from DOM entirely
+                const metaTag = document.querySelector('meta[name="theme-color"]');
+                if (metaTag && metaTag.parentNode) {
+                    metaTag.remove();
+                }
+            } else {
+                // Add meta tag to DOM if it doesn't exist
+                if (!document.querySelector('meta[name="theme-color"]')) {
+                    const meta = document.createElement('meta');
+                    meta.name = 'theme-color';
+                    const currentValue = document.getElementById("color-picker-meta").value;
+                    meta.content = normalizeColor(currentValue);
+                    document.head.appendChild(meta);
+                }
             }
+            updateURLParams();
+            updateGeneratedCode();
         });
 
         fixedCheckbox.addEventListener("change", function() {
-            const currentValue = document.getElementById("color-picker-fixed").value;
-            // Always pass the current value - the function will handle checkbox state
-            updateFixedColors(currentValue);
-            // Toggle display style to force Safari to re-sample colors
+            // Toggle display:none to show/hide fixed elements
             if (!this.checked) {
                 if (fixedTopElement) fixedTopElement.style.display = 'none';
                 if (fixedBottomElement) fixedBottomElement.style.display = 'none';
@@ -910,6 +917,8 @@ ${headContent ? headContent + '\n' : ''}</head>
                 if (fixedTopElement) fixedTopElement.style.removeProperty('display');
                 if (fixedBottomElement) fixedBottomElement.style.removeProperty('display');
             }
+            updateURLParams();
+            updateGeneratedCode();
         });
     };
 
