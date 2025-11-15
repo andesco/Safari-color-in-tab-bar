@@ -902,9 +902,13 @@ ${headContent ? headContent + '\n' : ''}</head>
             const currentValue = document.getElementById("color-picker-fixed").value;
             // Always pass the current value - the function will handle checkbox state
             updateFixedColors(currentValue);
-            // Reload page to force Safari to re-sample colors when unchecked
+            // Toggle display style to force Safari to re-sample colors
             if (!this.checked) {
-                window.location.reload();
+                if (fixedTopElement) fixedTopElement.style.display = 'none';
+                if (fixedBottomElement) fixedBottomElement.style.display = 'none';
+            } else {
+                if (fixedTopElement) fixedTopElement.style.removeProperty('display');
+                if (fixedBottomElement) fixedBottomElement.style.removeProperty('display');
             }
         });
     };
